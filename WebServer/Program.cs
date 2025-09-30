@@ -29,7 +29,9 @@ namespace WebServer
                 byte[] buffer = new byte[1024];
                 
                 int bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
+                string request = Encoding.UTF8.GetString(buffer, 0, bytesRead);
                 
+                Console.WriteLine($"request: {request}");
             }
         }
     }
