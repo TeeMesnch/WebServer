@@ -170,6 +170,35 @@ namespace WebServer
 
     public class HttpProtocol
     {
+        public static string AssemblePacket(string request)
+        {
+            var ligma = StatusLine();
+            return ligma;
+        }
+
+        public static string StatusLine()
+        {
+            return "HTTP/1.1 200 OK";
+        }
+
+        public static string StatusCode()
+        {
+            return "HTTP/1.1 200 OK";
+        }
+
+        public static string HttpHeaders()
+        {
+            return "HTTP/1.1 200 OK";
+        }
         
+        public static string AddCustomHeader(string name, string value)
+        {
+            return string.Empty;
+        }
+
+        public static string HttpBody()
+        {
+            return "HTTP/1.1 200 OK";
+        }
     }
 }
