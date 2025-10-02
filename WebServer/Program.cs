@@ -170,35 +170,43 @@ namespace WebServer
 
     public class HttpProtocol
     {
-        public static string AssemblePacket(string request)
-        {
-            var ligma = StatusLine();
-            return ligma;
-        }
-
-        public static string StatusLine()
-        {
-            return "HTTP/1.1 200 OK";
-        }
-
-        public static string StatusCode()
-        {
-            return "HTTP/1.1 200 OK";
-        }
-
-        public static string HttpHeaders()
-        {
-            return "HTTP/1.1 200 OK";
-        }
         
-        public static string AddCustomHeader(string name, string value)
+        // HttpProtocol.StatusLine statusLine = new HttpProtocol.StatusLine();
+        
+        public class StatusLine()
         {
-            return string.Empty;
+            public static string StatusVersion()
+            {
+                return string.Empty;
+            }
+
+            public static (byte[] ok, byte[] notFound) StatusCode()
+            {
+                byte[] OK = Encoding.UTF8.GetBytes("200 OK\r\n");
+                byte[] notFound = Encoding.UTF8.GetBytes("404 Not Found\r\n");
+                return (OK, notFound);
+            }
         }
 
-        public static string HttpBody()
+        public class HttpHeader()
         {
-            return "HTTP/1.1 200 OK";
+            public static string LastHeader()
+            {
+                return string.Empty;
+            }
+            
+            public static string AddCustomHeader(string name, string value)
+            {
+                return string.Empty;
+            }
+        }
+
+        public class HttpBody()
+        {
+            public static string Body()
+            {
+                return string.Empty;
+            }
         }
     }
 }
