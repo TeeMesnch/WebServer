@@ -203,7 +203,7 @@ namespace WebServer
 
         public class HttpBody()
         {
-            public static string Body()
+            public static string Body(string data)
             {
                 return string.Empty;
             }
