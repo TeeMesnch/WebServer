@@ -18,7 +18,7 @@
 3. When you start the server, you'll be prompted to enter the password you set for the `.pfx` file.
 4. Test the server with:
 
-curl -k https://localhost:4200/
+curl -v https://localhost:4200/
 
 ## self sign Certificate
 
