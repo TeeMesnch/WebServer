@@ -176,5 +176,46 @@ namespace WebServer
             Console.WriteLine("\nto start the server enter the path to your cert.pfx in the main function and enter your password when prompted\n");
             Console.WriteLine("Password: \n");
         }
+
+        internal class Endpoins
+        {
+            static async Task Index()
+            {
+                
+            }
+
+            static async Task Echo()
+            {
+                
+            }
+
+            static async Task File()
+            {
+                static async Task Create()
+                {
+                    
+                }
+
+                static async Task Compress()
+                {
+                    
+                }
+            }
+
+            static async Task Video()
+            {
+                
+            }
+
+            static async Task Image()
+            {
+                
+            }
+
+            static async Task Chat()
+            {
+                
+            }
+        }
     }
 }
