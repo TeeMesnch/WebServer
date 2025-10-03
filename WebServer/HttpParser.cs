@@ -59,14 +59,52 @@ namespace WebServer
             return version;
         }
         
-        public static async Task<string> GetHeader(string request)
+        public static (string headers, string userAgent) GetHeader(string request)
         {
-            return string.Empty;
+            string headers;
+            string userAgent;
+            
+            try
+            {
+                var line = request.Split("\r\n");
+                int toTrim = line[0].Length;
+                
+                headers = request.Substring(toTrim);
+
+                if (headers.Contains("User-Agent"))
+                {
+                    userAgent = headers.Split("User-Agent")[1];
+                    userAgent = userAgent.Split("\r\n")[0];
+                }
+                else
+                {
+                    throw new Exception("No user agent found");
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                throw;
+            }
+
+            return (headers, userAgent);
         }
 
-        public static async Task<string> GetBody(string request)
+        public static string GetBody(string request)
         {
-            return string.Empty;
+            string body;
+
+            try
+            {
+                body = request.Split("\r\n\r\n")[1];
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                throw;
+            }
+            
+            return body;
         }
     }
 }

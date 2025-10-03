@@ -10,6 +10,7 @@ namespace WebServer
     public class Server
     {
         static X509Certificate2 serverCertificate;
+        public const int RetryAfter = 60; // Implement later
         private const bool Debug = false;
 
         static async Task Main(string[] args)
@@ -71,16 +72,17 @@ namespace WebServer
                 }
 
                 var request = await ProcessMessage(sslStream);
-                var method = HttpParser.GetMethod(request);
                 
                 var statusCode = HttpProtocol.StatusLine.Ok;
+                
+                var body = Encoding.UTF8.GetBytes("Hello Client!");
+                
                 var headers = new List<byte[]>
                 {
-                    HttpProtocol.HttpHeader.ContentLength(method.Length),
+                    HttpProtocol.HttpHeader.ContentLength(body.Length),
+                    HttpProtocol.HttpHeader.Date,
                     HttpProtocol.HttpHeader.ConnectionKeepAlive,
                 };
-                
-                var body = Encoding.UTF8.GetBytes(method);
                 
                 var packet = HttpProtocol.Builder.BuildResponse(statusCode, headers, body);
                 
