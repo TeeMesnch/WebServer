@@ -1,8 +1,6 @@
-using System.Text;
-
-namespace Parser
+namespace WebServer
 {
-    class HttpParser
+    public class HttpParser
     {
         public static string GetMethod(string request)
         {

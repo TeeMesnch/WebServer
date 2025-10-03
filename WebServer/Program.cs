@@ -7,7 +7,7 @@ using System.Security.Cryptography.X509Certificates;
 
 namespace WebServer
 {
-    public sealed class Server
+    public class Server
     {
         static X509Certificate2 serverCertificate;
         private const bool Debug = false;
@@ -18,11 +18,8 @@ namespace WebServer
             
             string certificatePath = "/Users/jonathan/Desktop/localhost.pfx";
             string certificatePassword = Console.ReadLine();
-            if (!File.Exists(certificatePath))
-            {
-                throw new FileNotFoundException("Certificate file not found");
-            }
-            if (certificatePassword == null)
+            
+            if (certificatePassword == string.Empty)
             {
                 throw new NullReferenceException("Certificate password is required");
             }
@@ -73,14 +70,25 @@ namespace WebServer
                     DisplayCertificateInformation(sslStream);
                 }
 
-                var messageData = await ProcessMessage(sslStream);
-                Console.WriteLine(messageData);
-                byte[] message = Encoding.UTF8.GetBytes("Hello World!");
-                await sslStream.WriteAsync(message, 0, message.Length);
+                var request = await ProcessMessage(sslStream);
+                var method = HttpParser.GetMethod(request);
+                
+                var statusCode = HttpProtocol.StatusLine.Ok;
+                var headers = new List<byte[]>
+                {
+                    HttpProtocol.HttpHeader.ContentLength(method.Length),
+                    HttpProtocol.HttpHeader.ConnectionKeepAlive,
+                };
+                
+                var body = Encoding.UTF8.GetBytes(method);
+                
+                var packet = HttpProtocol.Builder.BuildResponse(statusCode, headers, body);
+                
+                await sslStream.WriteAsync(packet, 0, packet.Length);
             }
             catch (AuthenticationException e)
             {
-                Console.WriteLine("Exception: {0}", e.Message);
+                Console.WriteLine(e.Message);
                 if (e.InnerException != null)
                 {
                     Console.WriteLine("Inner exception: {0}", e.InnerException.Message);
@@ -165,48 +173,6 @@ namespace WebServer
         {
             Console.WriteLine("\nto start the server enter the path to your cert.pfx in the main function and enter your password when prompted\n");
             Console.WriteLine("Password: \n");
-        }
-    }
-
-    public class HttpProtocol
-    {
-        
-        // HttpProtocol.StatusLine statusLine = new HttpProtocol.StatusLine();
-        
-        public class StatusLine()
-        {
-            public static string StatusVersion()
-            {
-                return string.Empty;
-            }
-
-            public static (byte[] ok, byte[] notFound) StatusCode()
-            {
-                byte[] OK = Encoding.UTF8.GetBytes("200 OK\r\n");
-                byte[] notFound = Encoding.UTF8.GetBytes("404 Not Found\r\n");
-                return (OK, notFound);
-            }
-        }
-
-        public class HttpHeader()
-        {
-            public static string LastHeader()
-            {
-                return string.Empty;
-            }
-            
-            public static string AddCustomHeader(string name, string value)
-            {
-                return string.Empty;
-            }
-        }
-
-        public class HttpBody()
-        {
-            public static string Body(string data)
-            {
-                return string.Empty;
-            }
         }
     }
 }
