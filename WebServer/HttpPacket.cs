@@ -26,6 +26,7 @@ namespace WebServer
             public static readonly byte[] Ok = Encoding.UTF8.GetBytes("HTTP/1.1 200 OK\r\n");
             public static readonly byte[] Created = Encoding.UTF8.GetBytes("HTTP/1.1 201 Created\r\n");
             public static readonly byte[] NotFound = Encoding.UTF8.GetBytes("HTTP/1.1 404 Not Found\r\n");
+            public static readonly byte[] RequestTimeout = Encoding.UTF8.GetBytes("HTTP/1.1 408 Request Time-out\r\n");
 
             public static byte[] Custom(int code, string message)
             {
@@ -63,14 +64,6 @@ namespace WebServer
             static byte[] Encode(string text)
             {
                 return Encoding.UTF8.GetBytes(text);
-            }
-        }
-
-        public class HttpBody
-        {
-            public static string Body(string data)
-            {
-                return string.Empty;
             }
         }
     }

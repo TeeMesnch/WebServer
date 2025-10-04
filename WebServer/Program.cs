@@ -72,21 +72,40 @@ namespace WebServer
                 }
 
                 var request = await ProcessMessage(sslStream);
-                
-                var statusCode = HttpProtocol.StatusLine.Ok;
-                
-                var body = Encoding.UTF8.GetBytes("Hello Client!");
-                
-                var headers = new List<byte[]>
+
+                if (HttpParser.GetDomain(request) == "/")
                 {
-                    HttpProtocol.HttpHeader.ContentLength(body.Length),
-                    HttpProtocol.HttpHeader.Date,
-                    HttpProtocol.HttpHeader.ConnectionKeepAlive,
-                };
-                
-                var packet = HttpProtocol.Builder.BuildResponse(statusCode, headers, body);
-                
-                await sslStream.WriteAsync(packet, 0, packet.Length);
+                    var indexStatusCode = HttpProtocol.StatusLine.Ok;
+                    var indexBody = await Endpoints.Index();
+
+                    var indexHeaders = new List<byte[]>
+                    {
+                        HttpProtocol.HttpHeader.Date,
+                        HttpProtocol.HttpHeader.ContentTypeHtml,
+                        HttpProtocol.HttpHeader.ContentLength(indexBody.Length),
+                        HttpProtocol.HttpHeader.ConnectionKeepAlive
+                    };
+                    
+                    var indexPacket = HttpProtocol.Builder.BuildResponse(indexStatusCode, indexHeaders, indexBody);
+                    
+                    await sslStream.WriteAsync(indexPacket, 0, indexPacket.Length);
+                }
+                else
+                {
+                    var notFoundStatusCode = HttpProtocol.StatusLine.NotFound;
+                    var notFoundBody = Array.Empty<byte>();
+
+                    var notFoundHeaders = new List<byte[]>
+                    {
+                        HttpProtocol.HttpHeader.Date,
+                        HttpProtocol.HttpHeader.RetryAfter,
+                        HttpProtocol.HttpHeader.ContentLength(0),
+                    };
+                    
+                    var notFoundPacket =  HttpProtocol.Builder.BuildResponse(notFoundStatusCode, notFoundHeaders, notFoundBody);
+                    
+                    await sslStream.WriteAsync(notFoundPacket, 0, notFoundPacket.Length);
+                }
             }
             catch (AuthenticationException e)
             {
@@ -177,10 +196,24 @@ namespace WebServer
             Console.WriteLine("Password: \n");
         }
 
-        internal class Endpoins
+        private class Endpoints
         {
-            static async Task Index()
+            public static async Task<byte[]> Index()
             {
+                var fStream = new FileStream("/Users/jonathan/Desktop/cSharp/WebServer/WebServer/index.html", FileMode.Open, FileAccess.Read);
+
+                try
+                {
+                    byte[] buffer = new byte[fStream.Length];
+                    fStream.ReadAsync(buffer, 0, buffer.Length).Wait();
+                    
+                    return buffer;
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                    throw;
+                }
                 
             }
 
