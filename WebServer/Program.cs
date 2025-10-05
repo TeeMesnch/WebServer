@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System.IO.Enumeration;
+using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Net.Security;
@@ -256,16 +257,22 @@ namespace WebServer
                 }
             }
 
-            static async Task File()
+            public class File
             {
-                static async Task Create()
+                // TESTING DIRECTORY
+                public static async Task Create(string fileName)
                 {
-                    
+                    FileStream createStream = new FileStream($"/Users/jonathan/Desktop/test/{fileName}", FileMode.Create, FileAccess.Write);
                 }
 
-                static async Task Compress()
+                public static async Task GetContent(string fileName)
                 {
-                    
+                    FileStream readStream = new FileStream($"/Users/jonathan/Desktop/test/{fileName}", FileMode.Open, FileAccess.Read);
+                }
+
+                public static async Task Compress(string fileName)
+                {
+                    FileStream fileStream = new FileStream($"/Users/jonathan/Desktop/test/{fileName}", FileMode.OpenOrCreate, FileAccess.ReadWrite);
                 }
             }
 
