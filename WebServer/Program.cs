@@ -321,6 +321,11 @@ namespace WebServer
             {
                 
             }
+
+            static async Task Counter()
+            {
+                
+            }
         }
     }
 }
