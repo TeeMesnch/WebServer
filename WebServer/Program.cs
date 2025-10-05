@@ -268,15 +268,20 @@ namespace WebServer
             {
                 try
                 {
-                    var text = HttpParser.GetDomain(request).Substring(6);
-                    
-                    return Encoding.UTF8.GetBytes(text);
+                    if (HttpParser.GetDomain(request).Length > 5) // Fix magic later
+                    {
+                        var text = HttpParser.GetDomain(request).Substring(6);
+                        
+                        return Encoding.UTF8.GetBytes(text);
+                    }
                 }
                 catch (Exception e)
                 {
                     Console.WriteLine(e.Message);
                     throw;
                 }
+                
+                return Array.Empty<byte>();
             }
 
             public class File
