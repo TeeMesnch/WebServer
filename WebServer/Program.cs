@@ -72,36 +72,41 @@ namespace WebServer
                 }
 
                 var request = await ProcessMessage(sslStream);
+                
+                var indexStatusCode = HttpProtocol.StatusLine.Ok;
+                var indexBody = await Endpoints.Index();
+
+                // <index>
+                var indexHeaders = new List<byte[]>
+                {
+                    HttpProtocol.HttpHeader.Date,
+                    HttpProtocol.HttpHeader.ContentTypeHtml,
+                    HttpProtocol.HttpHeader.ContentLength(indexBody.Length),
+                    HttpProtocol.HttpHeader.ConnectionKeepAlive
+                };
+                // </index>
+                
+                // <notFound>
+                var notFoundStatusCode = HttpProtocol.StatusLine.NotFound;
+                var notFoundBody = Array.Empty<byte>();
+
+                var notFoundHeaders = new List<byte[]>
+                {
+                    HttpProtocol.HttpHeader.Date,
+                    HttpProtocol.HttpHeader.RetryAfter,
+                    HttpProtocol.HttpHeader.ContentLength(0),
+                };
+                // </notFound>
+
 
                 if (HttpParser.GetDomain(request) == "/")
                 {
-                    var indexStatusCode = HttpProtocol.StatusLine.Ok;
-                    var indexBody = await Endpoints.Index();
-
-                    var indexHeaders = new List<byte[]>
-                    {
-                        HttpProtocol.HttpHeader.Date,
-                        HttpProtocol.HttpHeader.ContentTypeHtml,
-                        HttpProtocol.HttpHeader.ContentLength(indexBody.Length),
-                        HttpProtocol.HttpHeader.ConnectionKeepAlive
-                    };
-                    
                     var indexPacket = HttpProtocol.Builder.BuildResponse(indexStatusCode, indexHeaders, indexBody);
                     
                     await sslStream.WriteAsync(indexPacket, 0, indexPacket.Length);
                 }
                 else
                 {
-                    var notFoundStatusCode = HttpProtocol.StatusLine.NotFound;
-                    var notFoundBody = Array.Empty<byte>();
-
-                    var notFoundHeaders = new List<byte[]>
-                    {
-                        HttpProtocol.HttpHeader.Date,
-                        HttpProtocol.HttpHeader.RetryAfter,
-                        HttpProtocol.HttpHeader.ContentLength(0),
-                    };
-                    
                     var notFoundPacket =  HttpProtocol.Builder.BuildResponse(notFoundStatusCode, notFoundHeaders, notFoundBody);
                     
                     await sslStream.WriteAsync(notFoundPacket, 0, notFoundPacket.Length);
