@@ -72,18 +72,31 @@ namespace WebServer
 
                 var request = await ProcessMessage(sslStream);
                 
-                // <index>
-                var indexStatusCode = HttpProtocol.StatusLine.Ok;
-                var indexBody = await Endpoints.Index();
+                // <index Html>
+                var indexHtmlStatusCode = HttpProtocol.StatusLine.Ok;
+                var indexHtmlBody = await Endpoints.IndexHtml();
                 
-                var indexHeaders = new List<byte[]>
+                var indexHtmlHeaders = new List<byte[]>
                 {
                     HttpProtocol.HttpHeader.Date,
                     HttpProtocol.HttpHeader.ContentTypeHtml,
-                    HttpProtocol.HttpHeader.ContentLength(indexBody.Length),
+                    HttpProtocol.HttpHeader.ContentLength(indexHtmlBody.Length),
                     HttpProtocol.HttpHeader.ConnectionKeepAlive
                 };
-                // </index>
+                // </index Html>
+                
+                // <index Js>
+                var indexJsStatusCode = HttpProtocol.StatusLine.Ok;
+                var indexJsBody = await Endpoints.IndexJs();
+
+                var indexJsHeaders = new List<byte[]>
+                {
+                    HttpProtocol.HttpHeader.Date,
+                    HttpProtocol.HttpHeader.ContentTypeJs,
+                    HttpProtocol.HttpHeader.ContentLength(indexHtmlBody.Length),
+                    HttpProtocol.HttpHeader.ConnectionKeepAlive
+                };
+                // </index Js>
                 
                 // <echo>
                 var echoStatusCode = HttpProtocol.StatusLine.Ok;
@@ -125,9 +138,12 @@ namespace WebServer
 
                 if (HttpParser.GetDomain(request) == "/")
                 {
-                    var indexPacket = HttpProtocol.Builder.BuildResponse(indexStatusCode, indexHeaders, indexBody);
-                    
-                    await sslStream.WriteAsync(indexPacket, 0, indexPacket.Length);
+                    var indexHtmlPacket = HttpProtocol.Builder.BuildResponse(indexHtmlStatusCode, indexHtmlHeaders, indexHtmlBody);
+                    var indexJsPacket = HttpProtocol.Builder.BuildResponse(indexJsStatusCode, indexJsHeaders, indexJsBody);
+
+                    // FIX LATER
+                    await sslStream.WriteAsync(indexHtmlPacket, 0, indexHtmlPacket.Length);
+                    await sslStream.WriteAsync(indexJsPacket, 0, indexJsPacket.Length);
                 }
                 else if (HttpParser.GetDomain(request).StartsWith("/echo/"))
                 {
@@ -245,16 +261,16 @@ namespace WebServer
 
         private class Endpoints
         {
-            public static async Task<byte[]> Index()
+            public static Task<byte[]> IndexHtml()
             {
-                var fStream = new FileStream("/Users/jonathan/Desktop/cSharp/WebServer/WebServer/index.html", FileMode.Open, FileAccess.Read);
+                var htmlStream = new FileStream("/Users/jonathan/Desktop/cSharp/WebServer/WebServer/index.html", FileMode.Open, FileAccess.Read);
 
                 try
                 {
-                    byte[] buffer = new byte[fStream.Length];
-                    fStream.ReadAsync(buffer, 0, buffer.Length).Wait();
+                    byte[] buffer = new byte[htmlStream.Length];
+                    htmlStream.ReadAsync(buffer, 0, buffer.Length).Wait();
                     
-                    return buffer;
+                    return Task.FromResult(buffer);
                 }
                 catch (Exception e)
                 {
@@ -262,6 +278,24 @@ namespace WebServer
                     throw;
                 }
                 
+            }
+
+            public static Task<byte[]> IndexJs()
+            {
+                var jsStream = new FileStream("/Users/jonathan/Desktop/cSharp/WebServer/WebServer/main.js", FileMode.Open, FileAccess.Read);
+
+                try
+                {
+                    byte[] buffer = new byte[jsStream.Length];
+                    jsStream.ReadAsync(buffer, 0, buffer.Length).Wait();
+
+                    return Task.FromResult(buffer);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                    throw;
+                }
             }
 
             public static byte[] Echo(string request)
