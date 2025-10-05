@@ -11,13 +11,16 @@ namespace WebServer
     public class Server
     {
         static X509Certificate2 serverCertificate;
-        public const int RetryAfter = 60; // Implement later
+        public const int RetryAfter = 60;
         private const bool Debug = false;
 
         static async Task Main(string[] args)
         {
-            DisplayUsage();   
-            
+            DisplayUsage();
+
+            // TESTING DIRECTORY
+            Environment.CurrentDirectory = "/Users/jonathan/Desktop/test";
+
             string certificatePath = "/Users/jonathan/Desktop/localhost.pfx";
             string certificatePassword = Console.ReadLine();
             
@@ -25,20 +28,16 @@ namespace WebServer
             {
                 throw new NullReferenceException("Certificate password is required");
             }
-
+            
             await RunServer(certificatePath, certificatePassword);
         }
 
         static async Task RunServer(string certificatePath, string certificatePassword)
         {
             const int port = 4200;
-            var ip = new IPEndPoint(IPAddress.Loopback, port);
+            var ip = new IPEndPoint(IPAddress.Loopback, port); 
             
-            serverCertificate = new X509Certificate2(
-                certificatePath,
-                certificatePassword,
-                X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.PersistKeySet
-            );
+            serverCertificate = X509CertificateLoader.LoadPkcs12FromFile(certificatePath, certificatePassword);
 
             TcpListener server = new TcpListener(ip);
             server.Start();
@@ -47,7 +46,7 @@ namespace WebServer
 
             while (true)
             {
-                var client = server.AcceptTcpClient();
+                var client = server.AcceptTcpClientAsync().GetAwaiter().GetResult();
                 await ProcessClient(client);
             }
         }
@@ -89,7 +88,7 @@ namespace WebServer
                 
                 // <echo>
                 var echoStatusCode = HttpProtocol.StatusLine.Ok;
-                var echoBody = await Endpoints.Echo(request);
+                var echoBody = Endpoints.Echo(request);
 
                 var echoHeaders = new List<byte[]>
                 {
@@ -99,6 +98,18 @@ namespace WebServer
                     HttpProtocol.HttpHeader.ConnectionKeepAlive
                 };
                 // </echo>
+                
+                // <create file>
+                var createStatusCode = HttpProtocol.StatusLine.Created;
+                var createBody = Array.Empty<byte>();
+
+                var createHeaders = new List<byte[]>
+                {
+                    HttpProtocol.HttpHeader.Date,
+                    HttpProtocol.HttpHeader.ContentLength(0),
+                    HttpProtocol.HttpHeader.ConnectionClose
+                };
+                // </create file>
                 
                 // <notFound>
                 var notFoundStatusCode = HttpProtocol.StatusLine.NotFound;
@@ -124,6 +135,18 @@ namespace WebServer
                     var echoPacket = HttpProtocol.Builder.BuildResponse(echoStatusCode, echoHeaders, echoBody);
 
                     await sslStream.WriteAsync(echoPacket, 0, echoPacket.Length);
+                }
+                else if (HttpParser.GetDomain(request).StartsWith("/file/create/"))
+                {
+                    int index = "/file/create/".Length;
+                    var name = HttpParser.GetDomain(request).Substring(index);
+                    var content = HttpParser.GetBody(request);
+
+                    await Endpoints.File.Create(name, content);
+                    
+                    var createPacket =  HttpProtocol.Builder.BuildResponse(createStatusCode, createHeaders, createBody);
+                    
+                    await sslStream.WriteAsync(createPacket, 0, createPacket.Length);
                 }
                 else
                 {
@@ -156,7 +179,7 @@ namespace WebServer
         {
             byte[] buffer = new byte[1024];
             StringBuilder builder = new StringBuilder();
-            int read = -1;
+            int read;
             
             read = await sslStream.ReadAsync(buffer, 0, buffer.Length);
             
@@ -242,7 +265,7 @@ namespace WebServer
                 
             }
 
-            public static async Task<byte[]> Echo(string request)
+            public static byte[] Echo(string request)
             {
                 try
                 {
@@ -260,9 +283,18 @@ namespace WebServer
             public class File
             {
                 // TESTING DIRECTORY
-                public static async Task Create(string fileName)
+                public static async Task Create(string fileName, string content)
                 {
-                    FileStream createStream = new FileStream($"/Users/jonathan/Desktop/test/{fileName}", FileMode.Create, FileAccess.Write);
+                    try
+                    {
+                        await System.IO.File.Create(fileName).DisposeAsync();
+                        await System.IO.File.WriteAllTextAsync(fileName, content);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e.Message);
+                        throw;
+                    }
                 }
 
                 public static async Task GetContent(string fileName)
