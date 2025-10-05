@@ -73,10 +73,10 @@ namespace WebServer
 
                 var request = await ProcessMessage(sslStream);
                 
+                // <index>
                 var indexStatusCode = HttpProtocol.StatusLine.Ok;
                 var indexBody = await Endpoints.Index();
-
-                // <index>
+                
                 var indexHeaders = new List<byte[]>
                 {
                     HttpProtocol.HttpHeader.Date,
@@ -85,6 +85,19 @@ namespace WebServer
                     HttpProtocol.HttpHeader.ConnectionKeepAlive
                 };
                 // </index>
+                
+                // <echo>
+                var echoStatusCode = HttpProtocol.StatusLine.Ok;
+                var echoBody = await Endpoints.Echo(request);
+
+                var echoHeaders = new List<byte[]>
+                {
+                    HttpProtocol.HttpHeader.Date,
+                    HttpProtocol.HttpHeader.ContentTypeText,
+                    HttpProtocol.HttpHeader.ContentLength(echoBody.Length),
+                    HttpProtocol.HttpHeader.ConnectionKeepAlive
+                };
+                // </echo>
                 
                 // <notFound>
                 var notFoundStatusCode = HttpProtocol.StatusLine.NotFound;
@@ -104,6 +117,12 @@ namespace WebServer
                     var indexPacket = HttpProtocol.Builder.BuildResponse(indexStatusCode, indexHeaders, indexBody);
                     
                     await sslStream.WriteAsync(indexPacket, 0, indexPacket.Length);
+                }
+                else if (HttpParser.GetDomain(request).StartsWith("/echo/"))
+                {
+                    var echoPacket = HttpProtocol.Builder.BuildResponse(echoStatusCode, echoHeaders, echoBody);
+
+                    await sslStream.WriteAsync(echoPacket, 0, echoPacket.Length);
                 }
                 else
                 {
@@ -222,9 +241,19 @@ namespace WebServer
                 
             }
 
-            static async Task Echo()
+            public static async Task<byte[]> Echo(string request)
             {
-                
+                try
+                {
+                    var text = HttpParser.GetDomain(request).Substring(6);
+                    
+                    return Encoding.UTF8.GetBytes(text);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                    throw;
+                }
             }
 
             static async Task File()
