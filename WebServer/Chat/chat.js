@@ -5,6 +5,8 @@ const usernameInput = document.getElementById('usernameInput');
 const sendButton = document.getElementById('sendButton');
 const messageInput = document.getElementById('messageInput');
 const messageList = document.getElementById('messageList');
+const chatBox = document.getElementById('chatBox');
+const eventSource = new EventSource("https://localhost:4200/messages");
 
 setUsernameButton.addEventListener('click', () => {
     const name = usernameInput.value.trim();
@@ -55,6 +57,12 @@ sendButton.addEventListener('click', () => {
             });
     }
 });
+
+eventSource.onmessage = event => {
+    const div = document.createElement("div");
+    div.textContent = event.data;
+    chatBox.appendChild(div);
+}
 
 messageInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {

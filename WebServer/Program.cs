@@ -159,6 +159,7 @@ namespace WebServer
                 {
                     HttpProtocol.HttpHeader.Date,
                     HttpProtocol.HttpHeader.ContentLength(0),
+                    HttpProtocol.HttpHeader.ContentTypeTextStream,
                     HttpProtocol.HttpHeader.ConnectionClose
                 };
                 // </message processing>
@@ -251,8 +252,24 @@ namespace WebServer
                     var messagePacket = HttpProtocol.Builder.BuildResponse(messageStatusCode, messageHeaders, messageBody);
                     
                     await sslStream.WriteAsync(messagePacket, 0, messagePacket.Length);
+                    
                     string userName = Endpoints.Chat.DisplayContent(content).userName;
                     string message = Endpoints.Chat.DisplayContent(content).message;
+                    
+                    var responseStatusCode = HttpProtocol.StatusLine.Ok;
+                    var responseBody = Encoding.UTF8.GetBytes($"{userName}: {message}");
+
+                    var responseHeaders = new List<byte[]>
+                    {
+                        HttpProtocol.HttpHeader.Date,
+                        HttpProtocol.HttpHeader.ContentLength(responseBody.Length),
+                        HttpProtocol.HttpHeader.ContentTypeTextStream,
+                        HttpProtocol.HttpHeader.ConnectionKeepAlive
+                    };
+                    
+                    var responsePacket = HttpProtocol.Builder.BuildResponse(responseStatusCode, responseHeaders, responseBody);
+                    
+                    await sslStream.WriteAsync(responsePacket, 0, responsePacket.Length);
                 }
                 // </message processing>
                 
@@ -540,19 +557,23 @@ namespace WebServer
 
                 public static (string userName, string message) DisplayContent(string content)
                 {
+                    string userName = string.Empty;
+                    string message = string.Empty;
+                    
                     try
                     {
-                        var userName = content.Substring("{\"username\":\"".Length).Split('"')[0];
+                        userName = content.Substring("{\"username\":\"".Length).Split('"')[0];
                         var unparsedMessage = content.Split(",")[1].Substring(" message: \"".Length);
-                        var message = unparsedMessage.Split('"')[0];
+                        message = unparsedMessage.Split('"')[0];
 
                         return (userName, message);
                     }
-                    catch (Exception e)
+                    catch (Exception)
                     {
-                        Console.WriteLine(e.Message);
-                        throw;
+                        Console.WriteLine("Error parsing content");
                     }
+                    
+                    return (userName, message);
                 }
             }
         }
