@@ -41,7 +41,7 @@ namespace WebServer
             TcpListener server = new TcpListener(ip);
             server.Start();
 
-            Console.WriteLine($"starting server (address: {ip})\n");
+            Console.WriteLine($"\nstarting server (address: {ip})\n");
 
             while (true)
             {
@@ -139,10 +139,16 @@ namespace WebServer
                 if (HttpParser.GetDomain(request) == "/")
                 {
                     var indexHtmlPacket = HttpProtocol.Builder.BuildResponse(indexHtmlStatusCode, indexHtmlHeaders, indexHtmlBody);
-                    var indexJsPacket = HttpProtocol.Builder.BuildResponse(indexJsStatusCode, indexJsHeaders, indexJsBody);
-
-                    // FIX LATER
+                    
                     await sslStream.WriteAsync(indexHtmlPacket, 0, indexHtmlPacket.Length);
+                }
+
+                if (HttpParser.GetDomain(request) == "/main.js")
+                {
+                    var indexJsPacket = HttpProtocol.Builder.BuildResponse(indexJsStatusCode, indexJsHeaders, indexJsBody);
+                    
+                    Console.WriteLine(Encoding.UTF8.GetString(indexJsPacket));
+                    
                     await sslStream.WriteAsync(indexJsPacket, 0, indexJsPacket.Length);
                 }
                 else if (HttpParser.GetDomain(request).StartsWith("/echo/"))
