@@ -17,10 +17,12 @@ setUsernameButton.addEventListener('click', () => {
 
 sendButton.addEventListener('click', () => {
     const message = messageInput.value.trim();
+
     if (!username) {
         alert('Please set a username first.');
         return;
     }
+
     if (message) {
         const messageElement = document.createElement('div');
         messageElement.className = 'message';
@@ -28,6 +30,29 @@ sendButton.addEventListener('click', () => {
         messageList.appendChild(messageElement);
         messageInput.value = '';
         messageList.scrollTop = messageList.scrollHeight;
+        
+        fetch('https://localhost:4200/messages', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                username: username,
+                message: message
+            })
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Server responded with an error.');
+                }
+                return response.text();
+            })
+            .then(data => {
+                console.log('Server response:', data);
+            })
+            .catch(error => {
+                console.error('Fetch error:', error);
+            });
     }
 });
 
@@ -36,3 +61,4 @@ messageInput.addEventListener('keydown', (e) => {
         sendButton.click();
     }
 });
+

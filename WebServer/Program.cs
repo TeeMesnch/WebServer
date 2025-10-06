@@ -4,6 +4,7 @@ using System.Text;
 using System.Net.Security;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
+using System.Text.Json;
 
 namespace WebServer
 {
@@ -150,6 +151,18 @@ namespace WebServer
                 };
                 // </chat Css>
                 
+                // <message processing>
+                var messageStatusCode = HttpProtocol.StatusLine.Ok;
+                var messageBody = Array.Empty<byte>();
+
+                var messageHeaders = new List<byte[]>
+                {
+                    HttpProtocol.HttpHeader.Date,
+                    HttpProtocol.HttpHeader.ContentLength(0),
+                    HttpProtocol.HttpHeader.ConnectionClose
+                };
+                // </message processing>
+                
                 // <echo>
                 var echoStatusCode = HttpProtocol.StatusLine.Ok;
                 var echoBody = Endpoints.Echo(request);
@@ -229,6 +242,19 @@ namespace WebServer
                     await sslStream.WriteAsync(chatCssPacket, 0, chatCssPacket.Length);
                 }
                 // </chat>
+                
+                // <message processing>
+                if (HttpParser.GetDomain(request) == "/messages")
+                {
+                    var content = HttpParser.GetBody(request);
+                    
+                    var messagePacket = HttpProtocol.Builder.BuildResponse(messageStatusCode, messageHeaders, messageBody);
+                    
+                    await sslStream.WriteAsync(messagePacket, 0, messagePacket.Length);
+                    string userName = Endpoints.Chat.DisplayContent(content).userName;
+                    string message = Endpoints.Chat.DisplayContent(content).message;
+                }
+                // </message processing>
                 
                 // <echo>
                 else if (HttpParser.GetDomain(request).StartsWith("/echo/"))
@@ -510,6 +536,23 @@ namespace WebServer
                         throw;
                     }
                 
+                }
+
+                public static (string userName, string message) DisplayContent(string content)
+                {
+                    try
+                    {
+                        var userName = content.Substring("{\"username\":\"".Length).Split('"')[0];
+                        var unparsedMessage = content.Split(",")[1].Substring(" message: \"".Length);
+                        var message = unparsedMessage.Split('"')[0];
+
+                        return (userName, message);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e.Message);
+                        throw;
+                    }
                 }
             }
         }
