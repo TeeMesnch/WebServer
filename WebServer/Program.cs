@@ -94,9 +94,22 @@ namespace WebServer
                     HttpProtocol.HttpHeader.Date,
                     HttpProtocol.HttpHeader.ContentTypeJs,
                     HttpProtocol.HttpHeader.ContentLength(indexHtmlBody.Length),
-                    HttpProtocol.HttpHeader.ConnectionKeepAlive
+                    HttpProtocol.HttpHeader.ConnectionClose
                 };
                 // </index Js>
+                
+                // <index Css>
+                var indexCssStatusCode = HttpProtocol.StatusLine.Ok;
+                var indexCssBody = await Endpoints.IndexCss();
+
+                var indexCssHeaders = new List<byte[]>
+                {
+                    HttpProtocol.HttpHeader.Date,
+                    HttpProtocol.HttpHeader.ContentTypeCss,
+                    HttpProtocol.HttpHeader.ContentLength(indexCssBody.Length),
+                    HttpProtocol.HttpHeader.ConnectionClose
+                };
+                // </index Css>
                 
                 // <echo>
                 var echoStatusCode = HttpProtocol.StatusLine.Ok;
@@ -142,14 +155,17 @@ namespace WebServer
                     
                     await sslStream.WriteAsync(indexHtmlPacket, 0, indexHtmlPacket.Length);
                 }
-
                 if (HttpParser.GetDomain(request) == "/main.js")
                 {
                     var indexJsPacket = HttpProtocol.Builder.BuildResponse(indexJsStatusCode, indexJsHeaders, indexJsBody);
                     
-                    Console.WriteLine(Encoding.UTF8.GetString(indexJsPacket));
-                    
                     await sslStream.WriteAsync(indexJsPacket, 0, indexJsPacket.Length);
+                }
+                if (HttpParser.GetDomain(request) == "/style.css")
+                {
+                    var indexCssPacket = HttpProtocol.Builder.BuildResponse(indexCssStatusCode, indexCssHeaders, indexCssBody);
+                    
+                    await sslStream.WriteAsync(indexCssPacket, 0, indexCssPacket.Length);
                 }
                 else if (HttpParser.GetDomain(request).StartsWith("/echo/"))
                 {
@@ -185,14 +201,14 @@ namespace WebServer
                 }
 
                 Console.WriteLine("Authentication failed - closing the connection.");
-                sslStream.Close();
-                client.Close();
+                //sslStream.Close();
+                //client.Close();
             }
             finally
             {
-                await sslStream.DisposeAsync();
-                sslStream.Close();
-                client.Close();
+                //await sslStream.DisposeAsync();
+                //sslStream.Close();
+                //client.Close();
             }
         }
 
@@ -294,6 +310,24 @@ namespace WebServer
                 {
                     byte[] buffer = new byte[jsStream.Length];
                     jsStream.ReadAsync(buffer, 0, buffer.Length).Wait();
+
+                    return Task.FromResult(buffer);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                    throw;
+                }
+            }
+            
+            public static Task<byte[]> IndexCss()
+            {
+                var cssStream = new FileStream("/Users/jonathan/Desktop/cSharp/WebServer/WebServer/style.css", FileMode.Open, FileAccess.Read);
+
+                try
+                {
+                    byte[] buffer = new byte[cssStream.Length];
+                    cssStream.ReadAsync(buffer, 0, buffer.Length).Wait();
 
                     return Task.FromResult(buffer);
                 }
