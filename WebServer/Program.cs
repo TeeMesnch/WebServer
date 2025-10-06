@@ -93,7 +93,7 @@ namespace WebServer
                 {
                     HttpProtocol.HttpHeader.Date,
                     HttpProtocol.HttpHeader.ContentTypeJs,
-                    HttpProtocol.HttpHeader.ContentLength(indexHtmlBody.Length),
+                    HttpProtocol.HttpHeader.ContentLength(indexJsBody.Length),
                     HttpProtocol.HttpHeader.ConnectionClose
                 };
                 // </index Js>
@@ -110,6 +110,45 @@ namespace WebServer
                     HttpProtocol.HttpHeader.ConnectionClose
                 };
                 // </index Css>
+                
+                // <chat Html>
+                var chatHtmlStatusCode = HttpProtocol.StatusLine.Ok;
+                var chatHtmlBody = await Endpoints.Chat.ChatHtml();
+
+                var chatHtmlHeaders = new List<byte[]>
+                {
+                    HttpProtocol.HttpHeader.Date,
+                    HttpProtocol.HttpHeader.ContentTypeHtml,
+                    HttpProtocol.HttpHeader.ContentLength(chatHtmlBody.Length),
+                    HttpProtocol.HttpHeader.ConnectionKeepAlive
+                };
+                // </chat Html>
+                
+                // <chat Js>
+                var chatJsStatusCode = HttpProtocol.StatusLine.Ok;
+                var chatJsBody = await Endpoints.Chat.ChatJs();
+
+                var chatJsHeaders = new List<byte[]>
+                {
+                    HttpProtocol.HttpHeader.Date,
+                    HttpProtocol.HttpHeader.ContentTypeJs,
+                    HttpProtocol.HttpHeader.ContentLength(chatJsBody.Length),
+                    HttpProtocol.HttpHeader.ConnectionClose
+                };
+                // </chat Js>
+                
+                // <chat Css>
+                var chatCssStatusCode = HttpProtocol.StatusLine.Ok;
+                var chatCssBody = await Endpoints.Chat.ChatCss();
+
+                var chatCssHeaders = new List<byte[]>
+                {
+                    HttpProtocol.HttpHeader.Date,
+                    HttpProtocol.HttpHeader.ContentTypeCss,
+                    HttpProtocol.HttpHeader.ContentLength(chatCssBody.Length),
+                    HttpProtocol.HttpHeader.ConnectionClose
+                };
+                // </chat Css>
                 
                 // <echo>
                 var echoStatusCode = HttpProtocol.StatusLine.Ok;
@@ -149,6 +188,7 @@ namespace WebServer
                 // </notFound>
 
 
+                // <index>
                 if (HttpParser.GetDomain(request) == "/")
                 {
                     var indexHtmlPacket = HttpProtocol.Builder.BuildResponse(indexHtmlStatusCode, indexHtmlHeaders, indexHtmlBody);
@@ -167,12 +207,39 @@ namespace WebServer
                     
                     await sslStream.WriteAsync(indexCssPacket, 0, indexCssPacket.Length);
                 }
+                // </index>
+                
+                // <chat>
+                if (HttpParser.GetDomain(request) == "/chat")
+                {
+                    var chatHtmlPacket =  HttpProtocol.Builder.BuildResponse(chatHtmlStatusCode, chatHtmlHeaders, chatHtmlBody);
+                    
+                    await sslStream.WriteAsync(chatHtmlPacket, 0, chatHtmlPacket.Length);
+                }
+                if (HttpParser.GetDomain(request) == "/chat.js")
+                {
+                    var chatJsPacket = HttpProtocol.Builder.BuildResponse(chatJsStatusCode, chatJsHeaders, chatJsBody);
+                    
+                    await sslStream.WriteAsync(chatJsPacket, 0, chatJsPacket.Length);
+                }
+                if (HttpParser.GetDomain(request) == "/chat.css")
+                {
+                    var chatCssPacket = HttpProtocol.Builder.BuildResponse(chatCssStatusCode, chatCssHeaders, chatCssBody);
+                    
+                    await sslStream.WriteAsync(chatCssPacket, 0, chatCssPacket.Length);
+                }
+                // </chat>
+                
+                // <echo>
                 else if (HttpParser.GetDomain(request).StartsWith("/echo/"))
                 {
                     var echoPacket = HttpProtocol.Builder.BuildResponse(echoStatusCode, echoHeaders, echoBody);
 
                     await sslStream.WriteAsync(echoPacket, 0, echoPacket.Length);
                 }
+                // </echo>
+                
+                // <file> 
                 else if (HttpParser.GetDomain(request).StartsWith("/file/create/"))
                 {
                     int index = "/file/create/".Length;
@@ -185,6 +252,8 @@ namespace WebServer
                     
                     await sslStream.WriteAsync(createPacket, 0, createPacket.Length);
                 }
+                // </file>
+                
                 else
                 {
                     var notFoundPacket =  HttpProtocol.Builder.BuildResponse(notFoundStatusCode, notFoundHeaders, notFoundBody);
@@ -192,23 +261,17 @@ namespace WebServer
                     await sslStream.WriteAsync(notFoundPacket, 0, notFoundPacket.Length);
                 }
             }
-            catch (AuthenticationException e)
+            catch (AuthenticationException)
             {
-                Console.WriteLine(e.Message);
-                if (e.InnerException != null)
-                {
-                    Console.WriteLine("Inner exception: {0}", e.InnerException.Message);
-                }
-
-                Console.WriteLine("Authentication failed - closing the connection.");
-                //sslStream.Close();
-                //client.Close();
+                Console.WriteLine("Authentication failed - closing the connection");
+                sslStream.Close();
+                client.Close();
             }
             finally
             {
-                //await sslStream.DisposeAsync();
-                //sslStream.Close();
-                //client.Close();
+                await sslStream.DisposeAsync();
+                sslStream.Close();
+                client.Close();
             }
         }
 
@@ -342,7 +405,7 @@ namespace WebServer
             {
                 try
                 {
-                    if (HttpParser.GetDomain(request).Length > 5) // Fix magic later
+                    if (HttpParser.GetDomain(request).Length > 5)
                     {
                         var text = HttpParser.GetDomain(request).Substring(6);
                         
@@ -360,7 +423,6 @@ namespace WebServer
 
             public class File
             {
-                // TESTING DIRECTORY
                 public static async Task Create(string fileName, string content)
                 {
                     try
@@ -391,19 +453,64 @@ namespace WebServer
                 
             }
 
-            static async Task Image()
+            public class Chat
             {
-                
-            }
+                public static Task<byte[]> ChatCss()
+                {
+                    var cssStream = new FileStream("/Users/jonathan/Desktop/cSharp/WebServer/WebServer/Chat/chat.css", FileMode.Open, FileAccess.Read);
 
-            static async Task Chat()
-            {
+                    try
+                    {
+                        byte[] buffer = new byte[cssStream.Length];
+                        cssStream.ReadAsync(buffer, 0, buffer.Length).Wait();
+                    
+                        return Task.FromResult(buffer);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e.Message);
+                        throw;
+                    }
                 
-            }
+                }
+                
+                public static Task<byte[]> ChatJs()
+                {
+                    var jsStream = new FileStream("/Users/jonathan/Desktop/cSharp/WebServer/WebServer/Chat/chat.js", FileMode.Open, FileAccess.Read);
 
-            static async Task Counter()
-            {
+                    try
+                    {
+                        byte[] buffer = new byte[jsStream.Length];
+                        jsStream.ReadAsync(buffer, 0, buffer.Length).Wait();
+                    
+                        return Task.FromResult(buffer);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e.Message);
+                        throw;
+                    }
                 
+                }
+                
+                public static Task<byte[]> ChatHtml()
+                {
+                    var htmlStream = new FileStream("/Users/jonathan/Desktop/cSharp/WebServer/WebServer/Chat/chat.html", FileMode.Open, FileAccess.Read);
+
+                    try
+                    {
+                        byte[] buffer = new byte[htmlStream.Length];
+                        htmlStream.ReadAsync(buffer, 0, buffer.Length).Wait();
+                    
+                        return Task.FromResult(buffer);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e.Message);
+                        throw;
+                    }
+                
+                }
             }
         }
     }

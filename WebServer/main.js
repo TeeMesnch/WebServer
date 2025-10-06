@@ -23,4 +23,3 @@ resetBtn.addEventListener('click', () => {
 function updateDisplay() {
     countDisplay.textContent = count;
 }
-
