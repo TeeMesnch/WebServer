@@ -269,6 +269,8 @@ namespace WebServer
                     
                     var responsePacket = HttpProtocol.Builder.BuildResponse(responseStatusCode, responseHeaders, responseBody);
                     
+                    Console.WriteLine(Encoding.UTF8.GetString(responsePacket));
+                    
                     await sslStream.WriteAsync(responsePacket, 0, responsePacket.Length);
                 }
                 // </message processing>

@@ -5,8 +5,21 @@ const usernameInput = document.getElementById('usernameInput');
 const sendButton = document.getElementById('sendButton');
 const messageInput = document.getElementById('messageInput');
 const messageList = document.getElementById('messageList');
-const chatBox = document.getElementById('chatBox');
+
 const eventSource = new EventSource("https://localhost:4200/messages");
+
+eventSource.onmessage = event => {
+    try {
+        const data = JSON.parse(event.data);
+        const div = document.createElement("div");
+        div.className = 'message';
+        div.textContent = `${data.username}: ${data.message}`;
+        messageList.appendChild(div);
+        messageList.scrollTop = messageList.scrollHeight;
+    } catch (err) {
+        console.error('Invalid message format from server:', event.data);
+    }
+};
 
 setUsernameButton.addEventListener('click', () => {
     const name = usernameInput.value.trim();
@@ -14,6 +27,8 @@ setUsernameButton.addEventListener('click', () => {
         username = name;
         usernameInput.disabled = true;
         setUsernameButton.disabled = true;
+    } else {
+        alert('Please enter a username.');
     }
 });
 
@@ -26,47 +41,25 @@ sendButton.addEventListener('click', () => {
     }
 
     if (message) {
-        const messageElement = document.createElement('div');
-        messageElement.className = 'message';
-        messageElement.innerText = `${username}: ${message}`;
-        messageList.appendChild(messageElement);
-        messageInput.value = '';
-        messageList.scrollTop = messageList.scrollHeight;
-        
         fetch('https://localhost:4200/messages', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                username: username,
-                message: message
-            })
-        })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Server responded with an error.');
-                }
-                return response.text();
-            })
-            .then(data => {
-                console.log('Server response:', data);
-            })
-            .catch(error => {
-                console.error('Fetch error:', error);
-            });
+            body: JSON.stringify({ username, message })
+        }).then(response => {
+            if (!response.ok) {
+                throw new Error('Server error');
+            }
+            messageInput.value = '';
+        }).catch(error => {
+            console.error('Send failed:', error);
+        });
     }
 });
-
-eventSource.onmessage = event => {
-    const div = document.createElement("div");
-    div.textContent = event.data;
-    chatBox.appendChild(div);
-}
 
 messageInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
         sendButton.click();
     }
 });
-
