@@ -4,22 +4,6 @@ const setUsernameButton = document.getElementById('setUsernameButton');
 const usernameInput = document.getElementById('usernameInput');
 const sendButton = document.getElementById('sendButton');
 const messageInput = document.getElementById('messageInput');
-const messageList = document.getElementById('messageList');
-
-const eventSource = new EventSource("https://localhost:4200/messages");
-
-eventSource.onmessage = event => {
-    try {
-        const data = JSON.parse(event.data);
-        const div = document.createElement("div");
-        div.className = 'message';
-        div.textContent = `${data.username}: ${data.message}`;
-        messageList.appendChild(div);
-        messageList.scrollTop = messageList.scrollHeight;
-    } catch (err) {
-        console.error('Invalid message format from server:', event.data);
-    }
-};
 
 setUsernameButton.addEventListener('click', () => {
     const name = usernameInput.value.trim();

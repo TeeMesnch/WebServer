@@ -4,7 +4,6 @@ using System.Text;
 using System.Net.Security;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
-using System.Text.Json;
 
 namespace WebServer
 {
@@ -73,242 +72,69 @@ namespace WebServer
 
                 var request = await ProcessMessage(sslStream);
                 
-                // <index Html>
-                var indexHtmlStatusCode = HttpProtocol.StatusLine.Ok;
-                var indexHtmlBody = await Endpoints.IndexHtml();
-                
-                var indexHtmlHeaders = new List<byte[]>
-                {
-                    HttpProtocol.HttpHeader.Date,
-                    HttpProtocol.HttpHeader.ContentTypeHtml,
-                    HttpProtocol.HttpHeader.ContentLength(indexHtmlBody.Length),
-                    HttpProtocol.HttpHeader.ConnectionKeepAlive
-                };
-                // </index Html>
-                
-                // <index Js>
-                var indexJsStatusCode = HttpProtocol.StatusLine.Ok;
-                var indexJsBody = await Endpoints.IndexJs();
-
-                var indexJsHeaders = new List<byte[]>
-                {
-                    HttpProtocol.HttpHeader.Date,
-                    HttpProtocol.HttpHeader.ContentTypeJs,
-                    HttpProtocol.HttpHeader.ContentLength(indexJsBody.Length),
-                    HttpProtocol.HttpHeader.ConnectionClose
-                };
-                // </index Js>
-                
-                // <index Css>
-                var indexCssStatusCode = HttpProtocol.StatusLine.Ok;
-                var indexCssBody = await Endpoints.IndexCss();
-
-                var indexCssHeaders = new List<byte[]>
-                {
-                    HttpProtocol.HttpHeader.Date,
-                    HttpProtocol.HttpHeader.ContentTypeCss,
-                    HttpProtocol.HttpHeader.ContentLength(indexCssBody.Length),
-                    HttpProtocol.HttpHeader.ConnectionClose
-                };
-                // </index Css>
-                
-                // <chat Html>
-                var chatHtmlStatusCode = HttpProtocol.StatusLine.Ok;
-                var chatHtmlBody = await Endpoints.Chat.ChatHtml();
-
-                var chatHtmlHeaders = new List<byte[]>
-                {
-                    HttpProtocol.HttpHeader.Date,
-                    HttpProtocol.HttpHeader.ContentTypeHtml,
-                    HttpProtocol.HttpHeader.ContentLength(chatHtmlBody.Length),
-                    HttpProtocol.HttpHeader.ConnectionKeepAlive
-                };
-                // </chat Html>
-                
-                // <chat Js>
-                var chatJsStatusCode = HttpProtocol.StatusLine.Ok;
-                var chatJsBody = await Endpoints.Chat.ChatJs();
-
-                var chatJsHeaders = new List<byte[]>
-                {
-                    HttpProtocol.HttpHeader.Date,
-                    HttpProtocol.HttpHeader.ContentTypeJs,
-                    HttpProtocol.HttpHeader.ContentLength(chatJsBody.Length),
-                    HttpProtocol.HttpHeader.ConnectionClose
-                };
-                // </chat Js>
-                
-                // <chat Css>
-                var chatCssStatusCode = HttpProtocol.StatusLine.Ok;
-                var chatCssBody = await Endpoints.Chat.ChatCss();
-
-                var chatCssHeaders = new List<byte[]>
-                {
-                    HttpProtocol.HttpHeader.Date,
-                    HttpProtocol.HttpHeader.ContentTypeCss,
-                    HttpProtocol.HttpHeader.ContentLength(chatCssBody.Length),
-                    HttpProtocol.HttpHeader.ConnectionClose
-                };
-                // </chat Css>
-                
-                // <message processing>
-                var messageStatusCode = HttpProtocol.StatusLine.Ok;
-                var messageBody = Array.Empty<byte>();
-
-                var messageHeaders = new List<byte[]>
-                {
-                    HttpProtocol.HttpHeader.Date,
-                    HttpProtocol.HttpHeader.ContentLength(0),
-                    HttpProtocol.HttpHeader.ContentTypeTextStream,
-                    HttpProtocol.HttpHeader.ConnectionClose
-                };
-                // </message processing>
-                
-                // <echo>
-                var echoStatusCode = HttpProtocol.StatusLine.Ok;
-                var echoBody = Endpoints.Echo(request);
-
-                var echoHeaders = new List<byte[]>
-                {
-                    HttpProtocol.HttpHeader.Date,
-                    HttpProtocol.HttpHeader.ContentTypeText,
-                    HttpProtocol.HttpHeader.ContentLength(echoBody.Length),
-                    HttpProtocol.HttpHeader.ConnectionKeepAlive
-                };
-                // </echo>
-                
-                // <create file>
-                var createStatusCode = HttpProtocol.StatusLine.Created;
-                var createBody = Array.Empty<byte>();
-
-                var createHeaders = new List<byte[]>
-                {
-                    HttpProtocol.HttpHeader.Date,
-                    HttpProtocol.HttpHeader.ContentLength(0),
-                    HttpProtocol.HttpHeader.ConnectionClose
-                };
-                // </create file>
-                
-                // <notFound>
-                var notFoundStatusCode = HttpProtocol.StatusLine.NotFound;
-                var notFoundBody = Array.Empty<byte>();
-
-                var notFoundHeaders = new List<byte[]>
-                {
-                    HttpProtocol.HttpHeader.Date,
-                    HttpProtocol.HttpHeader.RetryAfter,
-                    HttpProtocol.HttpHeader.ContentLength(0),
-                };
-                // </notFound>
-
-
-                // <index>
                 if (HttpParser.GetDomain(request) == "/")
                 {
-                    var indexHtmlPacket = HttpProtocol.Builder.BuildResponse(indexHtmlStatusCode, indexHtmlHeaders, indexHtmlBody);
+                    var indexHtmlPacket = await RouteIndexHtml();
                     
                     await sslStream.WriteAsync(indexHtmlPacket, 0, indexHtmlPacket.Length);
                 }
-                if (HttpParser.GetDomain(request) == "/main.js")
+                else if (HttpParser.GetDomain(request) == "/main.js")
                 {
-                    var indexJsPacket = HttpProtocol.Builder.BuildResponse(indexJsStatusCode, indexJsHeaders, indexJsBody);
+                    var indexJsPacket = await RouteIndexJs();
                     
                     await sslStream.WriteAsync(indexJsPacket, 0, indexJsPacket.Length);
                 }
-                if (HttpParser.GetDomain(request) == "/style.css")
+                else if (HttpParser.GetDomain(request) == "/style.css")
                 {
-                    var indexCssPacket = HttpProtocol.Builder.BuildResponse(indexCssStatusCode, indexCssHeaders, indexCssBody);
+                    var indexCssPacket = await RouteIndexCss();
                     
                     await sslStream.WriteAsync(indexCssPacket, 0, indexCssPacket.Length);
                 }
-                // </index>
-                
-                // <chat>
-                if (HttpParser.GetDomain(request) == "/chat")
+                else if (HttpParser.GetDomain(request) == "/chat")
                 {
-                    var chatHtmlPacket =  HttpProtocol.Builder.BuildResponse(chatHtmlStatusCode, chatHtmlHeaders, chatHtmlBody);
+                    var chatHtmlPacket = await RouteChatHtml();
                     
                     await sslStream.WriteAsync(chatHtmlPacket, 0, chatHtmlPacket.Length);
                 }
-                if (HttpParser.GetDomain(request) == "/chat.js")
+                else if (HttpParser.GetDomain(request) == "/chat.js")
                 {
-                    var chatJsPacket = HttpProtocol.Builder.BuildResponse(chatJsStatusCode, chatJsHeaders, chatJsBody);
+                    var chatJsPacket = await RouteChatJs();
                     
                     await sslStream.WriteAsync(chatJsPacket, 0, chatJsPacket.Length);
                 }
-                if (HttpParser.GetDomain(request) == "/chat.css")
+                else if (HttpParser.GetDomain(request) == "/chat.css")
                 {
-                    var chatCssPacket = HttpProtocol.Builder.BuildResponse(chatCssStatusCode, chatCssHeaders, chatCssBody);
+                    var chatCssPacket = await RouteChatCss();
                     
                     await sslStream.WriteAsync(chatCssPacket, 0, chatCssPacket.Length);
                 }
-                // </chat>
-                
-                // <message processing>
-                if (HttpParser.GetDomain(request) == "/messages")
+                else if (HttpParser.GetDomain(request) == "/messages")
                 {
-                    var content = HttpParser.GetBody(request);
-                    
-                    var messagePacket = HttpProtocol.Builder.BuildResponse(messageStatusCode, messageHeaders, messageBody);
-                    
-                    await sslStream.WriteAsync(messagePacket, 0, messagePacket.Length);
-                    
-                    string userName = Endpoints.Chat.DisplayContent(content).userName;
-                    string message = Endpoints.Chat.DisplayContent(content).message;
-                    
-                    var responseStatusCode = HttpProtocol.StatusLine.Ok;
-                    var responseBody = Encoding.UTF8.GetBytes($"{userName}: {message}");
-
-                    var responseHeaders = new List<byte[]>
-                    {
-                        HttpProtocol.HttpHeader.Date,
-                        HttpProtocol.HttpHeader.ContentLength(responseBody.Length),
-                        HttpProtocol.HttpHeader.ContentTypeTextStream,
-                        HttpProtocol.HttpHeader.ConnectionKeepAlive
-                    };
-                    
-                    var responsePacket = HttpProtocol.Builder.BuildResponse(responseStatusCode, responseHeaders, responseBody);
-                    
-                    Console.WriteLine(Encoding.UTF8.GetString(responsePacket));
+                    var responsePacket = RouteMessages(request);
                     
                     await sslStream.WriteAsync(responsePacket, 0, responsePacket.Length);
                 }
-                // </message processing>
-                
-                // <echo>
-                else if (HttpParser.GetDomain(request).StartsWith("/echo/"))
+                else if (HttpParser.GetDomain(request) == "/echo/")
                 {
-                    var echoPacket = HttpProtocol.Builder.BuildResponse(echoStatusCode, echoHeaders, echoBody);
-
-                    await sslStream.WriteAsync(echoPacket, 0, echoPacket.Length);
+                    var echoPacket = RouteEcho(request);
+                    
+                    await sslStream.WriteAsync(echoPacket, 0 , echoPacket.Length);
                 }
-                // </echo>
-                
-                // <file> 
-                else if (HttpParser.GetDomain(request).StartsWith("/file/create/"))
+                else if (HttpParser.GetDomain(request) == "/file/create")
                 {
-                    int index = "/file/create/".Length;
-                    var name = HttpParser.GetDomain(request).Substring(index);
-                    var content = HttpParser.GetBody(request);
-
-                    await Endpoints.File.Create(name, content);
+                    var createFilePacket= await RouteCreateFile(request);
                     
-                    var createPacket =  HttpProtocol.Builder.BuildResponse(createStatusCode, createHeaders, createBody);
-                    
-                    await sslStream.WriteAsync(createPacket, 0, createPacket.Length);
+                    await sslStream.WriteAsync(createFilePacket, 0, createFilePacket.Length);
                 }
-                // </file>
-                
                 else
                 {
-                    var notFoundPacket =  HttpProtocol.Builder.BuildResponse(notFoundStatusCode, notFoundHeaders, notFoundBody);
+                    var notFoundPacket= RouteNotFound(request);
                     
-                    await sslStream.WriteAsync(notFoundPacket, 0, notFoundPacket.Length);
+                    await sslStream.WriteAsync(notFoundPacket, 0 , notFoundPacket.Length);
                 }
             }
             catch (AuthenticationException)
             {
-                Console.WriteLine("Authentication failed - closing the connection");
                 sslStream.Close();
                 client.Close();
             }
@@ -318,6 +144,203 @@ namespace WebServer
                 sslStream.Close();
                 client.Close();
             }
+        }
+
+        static async Task<byte[]> RouteIndexHtml()
+        {
+            var statusCode = HttpProtocol.StatusLine.Ok;
+            
+            var indexHtmlBody = await Endpoints.IndexHtml();
+                
+            var indexHtmlHeaders = new List<byte[]>
+            {
+                HttpProtocol.HttpHeader.Date,
+                HttpProtocol.HttpHeader.ContentTypeHtml,
+                HttpProtocol.HttpHeader.ContentLength(indexHtmlBody.Length),
+                HttpProtocol.HttpHeader.ConnectionKeepAlive
+            };
+            
+            var indexHtmlPacket = HttpProtocol.Builder.BuildResponse(statusCode, indexHtmlHeaders, indexHtmlBody);
+
+            return indexHtmlPacket;
+        }
+
+        static async Task<byte[]> RouteIndexJs()
+        {
+            var statusCode = HttpProtocol.StatusLine.Ok;
+
+            var indexJsBody = await Endpoints.IndexJs();
+
+            var indexJsHeaders = new List<byte[]>
+            {
+                HttpProtocol.HttpHeader.Date,
+                HttpProtocol.HttpHeader.ContentTypeJs,
+                HttpProtocol.HttpHeader.ContentLength(indexJsBody.Length),
+                HttpProtocol.HttpHeader.ConnectionClose
+            };
+            
+            var indexJsPacket = HttpProtocol.Builder.BuildResponse(statusCode, indexJsHeaders, indexJsBody);
+            
+            return indexJsPacket;
+        }
+        
+        static async Task<byte[]> RouteIndexCss()
+        {
+            var statusCode = HttpProtocol.StatusLine.Ok;
+            
+            var indexCssBody = await Endpoints.IndexCss();
+
+            var indexCssHeaders = new List<byte[]>
+            {
+                HttpProtocol.HttpHeader.Date,
+                HttpProtocol.HttpHeader.ContentTypeCss,
+                HttpProtocol.HttpHeader.ContentLength(indexCssBody.Length),
+                HttpProtocol.HttpHeader.ConnectionClose
+            };
+            
+            var indexCssPacket = HttpProtocol.Builder.BuildResponse(statusCode, indexCssHeaders, indexCssBody);
+
+            return indexCssPacket;
+        }
+
+        static byte[] RouteEcho(string request)
+        {
+            var echoStatusCode = HttpProtocol.StatusLine.Ok;
+            var echoBody = Endpoints.Echo(request);
+
+            var echoHeaders = new List<byte[]>
+            {
+                HttpProtocol.HttpHeader.Date,
+                HttpProtocol.HttpHeader.ContentTypeText,
+                HttpProtocol.HttpHeader.ContentLength(echoBody.Length),
+                HttpProtocol.HttpHeader.ConnectionKeepAlive
+            };
+            
+            var echoPacket = HttpProtocol.Builder.BuildResponse(echoStatusCode, echoHeaders, echoBody);
+            
+            return echoPacket;
+        }
+
+        static byte[] RouteNotFound(string request)
+        {
+            var notFoundStatusCode = HttpProtocol.StatusLine.NotFound;
+            var notFoundBody = Array.Empty<byte>();
+
+            var notFoundHeaders = new List<byte[]>
+            {
+                HttpProtocol.HttpHeader.Date,
+                HttpProtocol.HttpHeader.RetryAfter,
+                HttpProtocol.HttpHeader.ContentLength(0),
+            };
+            
+            var notFoundPacket = HttpProtocol.Builder.BuildResponse(notFoundStatusCode, notFoundHeaders, notFoundBody);
+            
+            return notFoundPacket;
+        }
+
+        static async Task<byte[]> RouteChatHtml()
+        {
+            var chatHtmlStatusCode = HttpProtocol.StatusLine.Ok;
+            var chatHtmlBody = await Endpoints.Chat.ChatHtml();
+
+            var chatHtmlHeaders = new List<byte[]>
+            {
+                HttpProtocol.HttpHeader.Date,
+                HttpProtocol.HttpHeader.ContentTypeHtml,
+                HttpProtocol.HttpHeader.ContentLength(chatHtmlBody.Length),
+                HttpProtocol.HttpHeader.ConnectionKeepAlive
+            };
+            
+            var chatHtmlPacket =  HttpProtocol.Builder.BuildResponse(chatHtmlStatusCode, chatHtmlHeaders, chatHtmlBody);
+
+            return chatHtmlPacket;
+        }
+
+        static async Task<byte[]> RouteChatJs()
+        {
+            var chatJsStatusCode = HttpProtocol.StatusLine.Ok;
+            var chatJsBody = await Endpoints.Chat.ChatJs();
+
+            var chatJsHeaders = new List<byte[]>
+            {
+                HttpProtocol.HttpHeader.Date,
+                HttpProtocol.HttpHeader.ContentTypeJs,
+                HttpProtocol.HttpHeader.ContentLength(chatJsBody.Length),
+                HttpProtocol.HttpHeader.ConnectionClose
+            };
+            
+            var chatJsPacket = HttpProtocol.Builder.BuildResponse(chatJsStatusCode, chatJsHeaders, chatJsBody);
+
+            return chatJsPacket;
+        }
+
+        static async Task<byte[]> RouteChatCss()
+        {
+            var chatCssStatusCode = HttpProtocol.StatusLine.Ok;
+            var chatCssBody = await Endpoints.Chat.ChatCss();
+
+            var chatCssHeaders = new List<byte[]>
+            {
+                HttpProtocol.HttpHeader.Date,
+                HttpProtocol.HttpHeader.ContentTypeCss,
+                HttpProtocol.HttpHeader.ContentLength(chatCssBody.Length),
+                HttpProtocol.HttpHeader.ConnectionClose
+            };
+            
+            var chatCssPacket = HttpProtocol.Builder.BuildResponse(chatCssStatusCode, chatCssHeaders, chatCssBody);
+
+            return chatCssPacket;
+        }
+        
+        static async Task<byte[]> RouteCreateFile(string request)
+        {
+            var createStatusCode = HttpProtocol.StatusLine.Created;
+            var createBody = Array.Empty<byte>();
+
+            var createHeaders = new List<byte[]>
+            {
+                HttpProtocol.HttpHeader.Date,
+                HttpProtocol.HttpHeader.ContentLength(0),
+                HttpProtocol.HttpHeader.ConnectionClose
+            };
+            
+            var createPacket = HttpProtocol.Builder.BuildResponse(createStatusCode, createHeaders, createBody);
+
+            if (HttpParser.GetDomain(request).StartsWith("/file/create/"))
+            {
+                int index = "/file/create/".Length;
+                var name = HttpParser.GetDomain(request).Substring(index);
+                var content = HttpParser.GetBody(request);
+
+                await Endpoints.File.Create(name, content);
+                
+                return createPacket;
+            }
+            
+            return Array.Empty<byte>();
+        }
+
+        static byte[] RouteMessages(string request)
+        {
+            var content = HttpParser.GetBody(request);
+
+            string userName = Endpoints.Chat.DisplayContent(content).userName;
+            string message = Endpoints.Chat.DisplayContent(content).message;
+                
+            var responseStatusCode = HttpProtocol.StatusLine.Ok;
+            var responseBody = Encoding.UTF8.GetBytes($"{userName}: {message}");
+
+            var responseHeaders = new List<byte[]> 
+            { 
+                HttpProtocol.HttpHeader.Date, 
+                HttpProtocol.HttpHeader.ContentLength(responseBody.Length), 
+                HttpProtocol.HttpHeader.ContentTypeTextStream, 
+                HttpProtocol.HttpHeader.ConnectionKeepAlive 
+            };
+                
+            var responsePacket = HttpProtocol.Builder.BuildResponse(responseStatusCode, responseHeaders, responseBody);
+                
+            return responsePacket;
         }
 
         static async Task<string> ProcessMessage(SslStream sslStream)
@@ -482,20 +505,20 @@ namespace WebServer
                     }
                 }
 
-                public static async Task GetContent(string fileName)
+                public static void GetContent(string fileName)
                 {
                     FileStream readStream = new FileStream($"/Users/jonathan/Desktop/test/{fileName}", FileMode.Open, FileAccess.Read);
                 }
 
-                public static async Task Compress(string fileName)
+                public static void Compress(string fileName)
                 {
                     FileStream fileStream = new FileStream($"/Users/jonathan/Desktop/test/{fileName}", FileMode.OpenOrCreate, FileAccess.ReadWrite);
                 }
             }
 
-            static async Task Video()
+            static void Video()
             {
-                
+                Console.WriteLine("Video started...");
             }
 
             public class Chat
@@ -572,7 +595,7 @@ namespace WebServer
                     }
                     catch (Exception)
                     {
-                        Console.WriteLine("Error parsing content");
+                        Console.WriteLine();
                     }
                     
                     return (userName, message);
