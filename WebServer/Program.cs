@@ -34,7 +34,12 @@ namespace WebServer
         static async Task RunServer(string certificatePath, string certificatePassword)
         {
             const int port = 4200;
-            var ip = new IPEndPoint(IPAddress.Loopback, port); 
+            
+            var hostName = Dns.GetHostName();
+            IPHostEntry localhost = await Dns.GetHostEntryAsync(hostName);
+            IPAddress localIpAddress = localhost.AddressList[0];
+            
+            var ip = new IPEndPoint(localIpAddress, port); 
             
             serverCertificate = X509CertificateLoader.LoadPkcs12FromFile(certificatePath, certificatePassword);
 
@@ -580,6 +585,11 @@ namespace WebServer
                 
                 }
 
+                public static void HandleWebSocket()
+                {
+                    Console.WriteLine("WebSocket started...");
+                }
+                
                 public static (string userName, string message) DisplayContent(string content)
                 {
                     string userName = string.Empty;
