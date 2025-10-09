@@ -39,36 +39,6 @@ namespace WebServer
                 }
             }
         }
-        
-        public static async Task WebSocketClient(IPAddress ip, int port)
-        {
-            using Socket socketClient = new (ip.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-            
-            await socketClient.ConnectAsync(ip, port);
-
-            while (true)
-            {
-                var message = "Hello World <|EOM|>";
-                var messageBytes = Encoding.UTF8.GetBytes(message);
-                
-                await socketClient.SendAsync(messageBytes, SocketFlags.None);
-                Console.WriteLine("sent message to client");
-                
-                var buffer = new byte[1024];
-                
-                var received = await socketClient.ReceiveAsync(buffer, SocketFlags.None);
-                var response =  Encoding.UTF8.GetString(buffer,0, received);
-                
-                if (response == "<|ACK|>")
-                {
-                    Console.WriteLine(
-                        $"Socket client received acknowledgment: \"{response}\"");
-                    break;
-                }
-
-                socketClient.Shutdown(SocketShutdown.Both);
-            }
-        }
     }
 }
 

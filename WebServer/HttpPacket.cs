@@ -23,6 +23,7 @@ namespace WebServer
 
         public class StatusLine
         {
+            public static readonly byte[] SwitchProtocol = Encoding.UTF8.GetBytes("HTTP/1.1 101 Switching Protocols\r\n");
             public static readonly byte[] Ok = Encoding.UTF8.GetBytes("HTTP/1.1 200 OK\r\n");
             public static readonly byte[] Created = Encoding.UTF8.GetBytes("HTTP/1.1 201 Created\r\n");
             public static readonly byte[] NotFound = Encoding.UTF8.GetBytes("HTTP/1.1 404 Not Found\r\n");
@@ -45,10 +46,13 @@ namespace WebServer
 
             public static readonly byte[] ConnectionClose = Encode("Connection: close\r\n");
             public static readonly byte[] ConnectionKeepAlive = Encode("Connection: keep-alive\r\n");
+            public static readonly byte[] ConnectionUpgradeWs = Encode("Connection: websocket\r\n");
             
             public static readonly byte[] ContentEncodingGzip = Encode("Content-Encoding: gzip\r\n");
             
             public static readonly byte[] Date = Encode($"Date: {DateTime.Now}\r\n");
+
+            public static readonly byte[] UpgradeWs = Encode("Upgrade: websocket\r\n");
             
             public static readonly byte[] RetryAfter = Encode($"Retry-After: {Server.RetryAfter}\r\n");
             
@@ -60,6 +64,11 @@ namespace WebServer
             public static byte[] ContentLength(int length)
             {
                 return Encode($"Content-Length: {length}\r\n");
+            }
+
+            public static byte[] WebSocketAccept(string accept)
+            {
+                return Encoding.UTF8.GetBytes($"Sec-WebSocket-Accept: {accept}\r\n");
             }
             
             static byte[] Encode(string text)
