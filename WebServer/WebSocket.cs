@@ -6,38 +6,56 @@ namespace WebServer
 {
     public class WebSocketHandler
     {
-        public static async Task WebSocketServer(IPEndPoint ip)
+        public static async Task RunWebsocket(IPEndPoint ip)
         {
-            using Socket listener = new(
-                ip.AddressFamily,
-                SocketType.Stream,
-                ProtocolType.Tcp);
+            using Socket sock = new(ip.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
 
-            listener.Bind(ip);
-            listener.Listen(100);
+            sock.Bind(ip);
+            sock.Listen(100);
 
-            var handler = await listener.AcceptAsync();
+            var socketHandler = await sock.AcceptAsync();
+            HandleTlsHandshake();
+            
             while (true)
             {
-                var buffer = new byte[1_024];
-                var received = await handler.ReceiveAsync(buffer, SocketFlags.None);
+                var buffer = new byte[1024];
+                var received = await socketHandler.ReceiveAsync(buffer, SocketFlags.None);
+                HandleWsHandshake();
                 var response = Encoding.UTF8.GetString(buffer, 0, received);
 
                 var eom = "<|EOM|>";
                 if (response.IndexOf(eom) > -1)
                 {
-                    Console.WriteLine(
-                        $"Socket server received message: \"{response.Replace(eom, "")}\"");
-
+                    Console.WriteLine($"Socket server received message: \"{response.Replace(eom, "")}\"");
+                    
                     var ackMessage = "<|ACK|>";
                     var echoBytes = Encoding.UTF8.GetBytes(ackMessage);
-                    await handler.SendAsync(echoBytes, 0);
-                    Console.WriteLine(
-                        $"Socket server sent acknowledgment: \"{ackMessage}\"");
-
+                    await socketHandler.SendAsync(echoBytes, 0);
+                    
+                    Console.WriteLine($"Socket server sent acknowledgment: \"{ackMessage}\"");
                     break;
                 }
             }
+        }
+        
+        private static void HandleWsHandshake()
+        {
+            Console.WriteLine("Ws handshake received");
+        }
+
+        private static void HandleTlsHandshake()
+        {
+            Console.WriteLine("Tls handshake received");
+        }
+
+        private static void ListenForEndSignal()
+        {
+            
+        }
+
+        private static void HandleChatMessage()
+        {
+            
         }
     }
 }

@@ -9,7 +9,7 @@ namespace WebServer
 {
     public class Server
     {
-        static X509Certificate2 serverCertificate;
+        static X509Certificate2 ServerCertificate;
         public const int RetryAfter = 60;
         private const bool LocalHost = true;
         private const bool Debug = false;
@@ -52,7 +52,7 @@ namespace WebServer
             }
 
 
-            serverCertificate = X509CertificateLoader.LoadPkcs12FromFile(certificatePath, certificatePassword);
+            ServerCertificate = X509CertificateLoader.LoadPkcs12FromFile(certificatePath, certificatePassword);
 
             TcpListener server = new TcpListener(ip);
             server.Start();
@@ -73,7 +73,7 @@ namespace WebServer
             try
             {
                 await sslStream.AuthenticateAsServerAsync(
-                    serverCertificate,
+                    ServerCertificate,
                     clientCertificateRequired: false,
                     enabledSslProtocols: SslProtocols.Tls12 | SslProtocols.Tls13,
                     checkCertificateRevocation: true
@@ -144,7 +144,7 @@ namespace WebServer
                 }
                 else
                 {
-                    var notFoundPacket= RouteNotFound(request);
+                    var notFoundPacket= RouteNotFound();
                     
                     await sslStream.WriteAsync(notFoundPacket, 0 , notFoundPacket.Length);
                 }
@@ -237,7 +237,7 @@ namespace WebServer
             return echoPacket;
         }
 
-        static byte[] RouteNotFound(string request)
+        static byte[] RouteNotFound()
         {
             var notFoundStatusCode = HttpProtocol.StatusLine.NotFound;
             var notFoundBody = Array.Empty<byte>();
@@ -405,7 +405,7 @@ namespace WebServer
             }
             else
             {
-                Console.WriteLine("Local certificate is null.");
+                Console.WriteLine("Local certificate cannot be found");
             }
 
             X509Certificate remoteCertificate = stream.RemoteCertificate;
@@ -418,7 +418,7 @@ namespace WebServer
             }
             else
             {
-                Console.WriteLine("Remote certificate is null.");
+                Console.WriteLine("no remote certificate found");
             }
         }
 

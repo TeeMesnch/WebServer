@@ -46,13 +46,14 @@ namespace WebServer
 
             public static readonly byte[] ConnectionClose = Encode("Connection: close\r\n");
             public static readonly byte[] ConnectionKeepAlive = Encode("Connection: keep-alive\r\n");
-            public static readonly byte[] ConnectionUpgradeWs = Encode("Connection: websocket\r\n");
+            public static readonly byte[] ConnectionUpgradeWs = Encode("Connection: upgrade\r\n");
             
             public static readonly byte[] ContentEncodingGzip = Encode("Content-Encoding: gzip\r\n");
             
             public static readonly byte[] Date = Encode($"Date: {DateTime.Now}\r\n");
 
             public static readonly byte[] UpgradeWs = Encode("Upgrade: websocket\r\n");
+            public static readonly byte[] WsProtocol = Encode("Sec-WebSocket-Protocol: chat\r\n");
             
             public static readonly byte[] RetryAfter = Encode($"Retry-After: {Server.RetryAfter}\r\n");
             
