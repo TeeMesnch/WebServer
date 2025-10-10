@@ -11,8 +11,41 @@ function displayMessage({ username, message }) {
     messageElement.classList.add('message');
     messageElement.innerHTML = `<strong>${username}:</strong> ${message}`;
     messageList.appendChild(messageElement);
-    messageList.scrollTop = messageList.scrollHeight; // Auto-scroll to bottom
+    messageList.scrollTop = messageList.scrollHeight;
 }
+
+let socket;
+
+function connectWebSocket() {
+    socket = new WebSocket('ws://localhost:4201');
+
+    socket.addEventListener('open', () => {
+        console.log('WebSocket connection established');
+    });
+
+    socket.addEventListener('message', (event) => {
+        try {
+            const data = JSON.parse(event.data);
+            if (data.username && data.message) {
+                displayMessage(data);
+            }
+        } catch (e) {
+            console.error('Invalid WebSocket message:', e);
+        }
+    });
+
+    socket.addEventListener('close', () => {
+        console.log('WebSocket connection closed. Reconnecting in 2 seconds...');
+        setTimeout(connectWebSocket, 2000);
+    });
+
+    socket.addEventListener('error', (error) => {
+        console.error('WebSocket error:', error);
+        socket.close();
+    });
+}
+
+connectWebSocket();
 
 setUsernameButton.addEventListener('click', () => {
     const name = usernameInput.value.trim();
@@ -44,7 +77,6 @@ sendButton.addEventListener('click', () => {
             if (!response.ok) {
                 throw new Error('Server error');
             }
-            displayMessage({ username, message });
             messageInput.value = '';
         }).catch(error => {
             console.error('Send failed:', error);
@@ -57,4 +89,5 @@ messageInput.addEventListener('keydown', (e) => {
         sendButton.click();
     }
 });
+
 

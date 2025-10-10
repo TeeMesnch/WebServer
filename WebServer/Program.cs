@@ -35,20 +35,21 @@ namespace WebServer
         static async Task RunServer(string certificatePath, string certificatePassword)
         {
             const int port = 4200;
+            const int wsPort = 4201;
             var ip = new IPEndPoint(IPAddress.Loopback, port);
+            var wsIp = new IPEndPoint(IPAddress.Loopback, wsPort);
 
             if (!LocalHost)
             {
                 var hostName = Dns.GetHostName();
                 IPHostEntry localhost = await Dns.GetHostEntryAsync(hostName);
 
-                IPAddress localIpAddress =
-                    localhost.AddressList.FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork);
+                IPAddress localIpAddress = localhost.AddressList.FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork);
 
-                if (localIpAddress == null)
-                    throw new Exception("No IPv4 address found for local host.");
+                if (localIpAddress == null) throw new Exception("No IPv4 address found for local host.");
 
                 ip = new IPEndPoint(localIpAddress, port);
+                wsIp = new IPEndPoint(localIpAddress, wsPort);
             }
 
 
@@ -62,22 +63,17 @@ namespace WebServer
             while (true)
             {
                 var client = server.AcceptTcpClientAsync().GetAwaiter().GetResult();
-                await ProcessClient(client);
+                await ProcessClient(client, wsIp);
             }
         }
 
-        static async Task ProcessClient(TcpClient client)
+        static async Task ProcessClient(TcpClient client, IPEndPoint wsEndPoint)
         {
             SslStream sslStream = new SslStream(client.GetStream(), false);
 
             try
             {
-                await sslStream.AuthenticateAsServerAsync(
-                    ServerCertificate,
-                    clientCertificateRequired: false,
-                    enabledSslProtocols: SslProtocols.Tls12 | SslProtocols.Tls13,
-                    checkCertificateRevocation: true
-                );
+                await sslStream.AuthenticateAsServerAsync(ServerCertificate, clientCertificateRequired: false, enabledSslProtocols: SslProtocols.Tls12 | SslProtocols.Tls13, checkCertificateRevocation: true);
 
                 if (Debug)
                 {
@@ -117,6 +113,8 @@ namespace WebServer
                     var chatJsPacket = await RouteChatJs();
                     
                     await sslStream.WriteAsync(chatJsPacket, 0, chatJsPacket.Length);
+
+                    await WebSocketHandler.RunWebsocket(wsEndPoint);
                 }
                 else if (HttpParser.GetDomain(request) == "/chat.css")
                 {

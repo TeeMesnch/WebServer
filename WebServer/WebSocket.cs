@@ -20,7 +20,12 @@ namespace WebServer
             {
                 var buffer = new byte[1024];
                 var received = await socketHandler.ReceiveAsync(buffer, SocketFlags.None);
-                HandleWsHandshake();
+                
+                string request = Encoding.UTF8.GetString(buffer, 0, received);
+                
+                HandleWsHandshake(request);
+                var key = HttpParser.GetHeader(request).wsKey;
+                
                 var response = Encoding.UTF8.GetString(buffer, 0, received);
 
                 var eom = "<|EOM|>";
@@ -38,9 +43,9 @@ namespace WebServer
             }
         }
         
-        private static void HandleWsHandshake()
+        private static string HandleWsHandshake(string request)
         {
-            Console.WriteLine("Ws handshake received");
+            return string.Empty;
         }
 
         private static void HandleTlsHandshake()

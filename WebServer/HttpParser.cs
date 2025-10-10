@@ -1,3 +1,5 @@
+using System.Reflection.Metadata.Ecma335;
+
 namespace WebServer
 {
     public class HttpParser
@@ -59,10 +61,11 @@ namespace WebServer
             return version;
         }
         
-        public static (string headers, string userAgent) GetHeader(string request)
+        public static (string headers, string userAgent, string wsKey) GetHeader(string request)
         {
             string headers;
             string userAgent;
+            string wsKey;
             
             try
             {
@@ -71,6 +74,17 @@ namespace WebServer
                 
                 headers = request.Substring(toTrim);
 
+                if (headers.Contains("Sec-WebSocket-Key"))
+                {
+                    wsKey = headers.Split("Sec-WebSocket-Key")[1];
+                    wsKey = wsKey.Split("\r\n")[0];
+                    wsKey = wsKey.Split(" ")[1];
+                }
+                else
+                {
+                    wsKey = String.Empty;
+                }
+                
                 if (headers.Contains("User-Agent"))
                 {
                     userAgent = headers.Split("User-Agent")[1];
@@ -78,7 +92,7 @@ namespace WebServer
                 }
                 else
                 {
-                    throw new Exception("No user agent found");
+                    userAgent = String.Empty;
                 }
             }
             catch (Exception e)
@@ -87,7 +101,7 @@ namespace WebServer
                 throw;
             }
 
-            return (headers, userAgent);
+            return (headers, userAgent, wsKey);
         }
 
         public static string GetBody(string request)
