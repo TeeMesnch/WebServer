@@ -22,9 +22,9 @@ namespace WebServer
                 var received = await socketHandler.ReceiveAsync(buffer, SocketFlags.None);
                 
                 string request = Encoding.UTF8.GetString(buffer, 0, received);
-                
-                HandleWsHandshake(request);
                 var key = HttpParser.GetHeader(request).wsKey;
+                
+                HandleWsHandshake(request, key);
                 
                 var response = Encoding.UTF8.GetString(buffer, 0, received);
 
@@ -43,14 +43,14 @@ namespace WebServer
             }
         }
         
-        private static string HandleWsHandshake(string request)
+        private static string HandleWsHandshake(string request, string key)
         {
             return string.Empty;
         }
 
         private static void HandleTlsHandshake()
         {
-            Console.WriteLine("Tls handshake received");
+            
         }
 
         private static void ListenForEndSignal()
