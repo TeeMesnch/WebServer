@@ -8,7 +8,7 @@ namespace WebServer
         {
             var statusCode = HttpProtocol.StatusLine.Ok;
             
-            var indexHtmlBody = await Server.Endpoints.IndexHtml();
+            var indexHtmlBody = await Endpoints.IndexHtml();
                 
             var indexHtmlHeaders = new List<byte[]>
             {
@@ -27,7 +27,7 @@ namespace WebServer
         {
             var statusCode = HttpProtocol.StatusLine.Ok;
 
-            var indexJsBody = await Server.Endpoints.IndexJs();
+            var indexJsBody = await Endpoints.IndexJs();
 
             var indexJsHeaders = new List<byte[]>
             {
@@ -46,7 +46,7 @@ namespace WebServer
         {
             var statusCode = HttpProtocol.StatusLine.Ok;
             
-            var indexCssBody = await Server.Endpoints.IndexCss();
+            var indexCssBody = await Endpoints.IndexCss();
 
             var indexCssHeaders = new List<byte[]>
             {
@@ -64,7 +64,7 @@ namespace WebServer
         public static byte[] RouteEcho(string request)
         {
             var echoStatusCode = HttpProtocol.StatusLine.Ok;
-            var echoBody = Server.Endpoints.Echo(request);
+            var echoBody = Endpoints.Echo(request);
 
             var echoHeaders = new List<byte[]>
             {
@@ -99,7 +99,7 @@ namespace WebServer
         public static async Task<byte[]> RouteChatHtml()
         {
             var chatHtmlStatusCode = HttpProtocol.StatusLine.Ok;
-            var chatHtmlBody = await Server.Endpoints.Chat.ChatHtml();
+            var chatHtmlBody = await Endpoints.Chat.ChatHtml();
 
             var chatHtmlHeaders = new List<byte[]>
             {
@@ -117,7 +117,7 @@ namespace WebServer
         public static async Task<byte[]> RouteChatJs()
         {
             var chatJsStatusCode = HttpProtocol.StatusLine.Ok;
-            var chatJsBody = await Server.Endpoints.Chat.ChatJs();
+            var chatJsBody = await Endpoints.Chat.ChatJs();
 
             var chatJsHeaders = new List<byte[]>
             {
@@ -135,7 +135,7 @@ namespace WebServer
         public static async Task<byte[]> RouteChatCss()
         {
             var chatCssStatusCode = HttpProtocol.StatusLine.Ok;
-            var chatCssBody = await Server.Endpoints.Chat.ChatCss();
+            var chatCssBody = await Endpoints.Chat.ChatCss();
 
             var chatCssHeaders = new List<byte[]>
             {
@@ -170,7 +170,7 @@ namespace WebServer
                 var name = HttpParser.GetDomain(request).Substring(index);
                 var content = HttpParser.GetBody(request);
 
-                await Server.Endpoints.File.Create(name, content);
+                await Endpoints.File.Create(name, content);
                 
                 return createPacket;
             }
@@ -182,8 +182,8 @@ namespace WebServer
         {
             var content = HttpParser.GetBody(request);
 
-            string userName = Server.Endpoints.Chat.DisplayContent(content).userName;
-            string message = Server.Endpoints.Chat.DisplayContent(content).message;
+            string userName = Endpoints.Chat.DisplayContent(content).userName;
+            string message = Endpoints.Chat.DisplayContent(content).message;
                 
             var responseStatusCode = HttpProtocol.StatusLine.Ok;
             var responseBody = Encoding.UTF8.GetBytes($"{userName}: {message}");
