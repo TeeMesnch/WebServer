@@ -178,6 +178,27 @@ namespace WebServer
             return Array.Empty<byte>();
         }
 
+        public static byte[] RouteCompressFile(string request)
+        {
+            string fileName = HttpParser.GetDomain(request).Substring("/file/compress/".Length);
+            
+            Endpoints.File.Compress(fileName);
+            
+            var compressStatusCode = HttpProtocol.StatusLine.Created;
+            var compressBody = Array.Empty<byte>();
+
+            var compressHeaders = new List<byte[]>
+            {
+                HttpProtocol.HttpHeader.Date,
+                HttpProtocol.HttpHeader.ContentLength(0),
+                HttpProtocol.HttpHeader.ConnectionClose
+            };
+            
+            var compressPacket = HttpProtocol.Builder.BuildResponse(compressStatusCode, compressHeaders, compressBody);
+
+            return compressPacket;
+        }
+
         public static byte[] RouteMessages(string request)
         {
             var content = HttpParser.GetBody(request);

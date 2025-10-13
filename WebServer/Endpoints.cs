@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using System.Text;
 
 namespace WebServer
@@ -8,9 +9,9 @@ namespace WebServer
         {
             try
             {
-                using var stream = new FileStream(path, FileMode.Open, FileAccess.Read);
+                await using var stream = new FileStream(path, FileMode.Open, FileAccess.Read);
                 byte[] buffer = new byte[stream.Length];
-                await stream.ReadAsync(buffer, 0, buffer.Length);
+                await stream.ReadExactlyAsync(buffer, 0, buffer.Length);
                 return buffer;
             }
             catch (Exception e)
@@ -74,10 +75,9 @@ namespace WebServer
             {
                 try
                 {
-                    using var readStream = new FileStream($"/Users/jonathan/Desktop/test/{fileName}", FileMode.Open,
-                        FileAccess.Read);
+                    await using var readStream = new FileStream($"/Users/jonathan/Desktop/test/{fileName}", FileMode.Open, FileAccess.Read);
                     byte[] buffer = new byte[readStream.Length];
-                    await readStream.ReadAsync(buffer, 0, buffer.Length);
+                    await readStream.ReadExactlyAsync(buffer, 0, buffer.Length);
                     return buffer;
                 }
                 catch (Exception e)
@@ -89,8 +89,22 @@ namespace WebServer
 
             public static void Compress(string fileName)
             {
-                using var fileStream = new FileStream($"/Users/jonathan/Desktop/test/{fileName}", FileMode.OpenOrCreate,
-                    FileAccess.ReadWrite);
+                var inputFile = fileName;
+                var outputFile = "compressedFile.gz";
+
+                try
+                {
+                    using FileStream fs = System.IO.File.Open(inputFile, FileMode.Open);
+                    using FileStream fsc = System.IO.File.Create(outputFile);
+                    using GZipStream gs = new GZipStream(fsc, CompressionMode.Compress);
+                
+                    fs.CopyTo(gs);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    Console.WriteLine("Compression failed");
+                }
             }
         }
 

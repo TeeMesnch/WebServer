@@ -140,6 +140,12 @@ namespace WebServer
                     
                     await sslStream.WriteAsync(createFilePacket, 0, createFilePacket.Length);
                 }
+                else if (HttpParser.GetDomain(request) == "/file/compress/")
+                {
+                    var compressFilePacket = Routes.RouteCompressFile(request);
+                    
+                    await sslStream.WriteAsync(compressFilePacket, 0, compressFilePacket.Length);
+                }
                 else
                 {
                     var notFoundPacket= Routes.RouteNotFound();
