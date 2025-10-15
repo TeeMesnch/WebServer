@@ -1,0 +1,16 @@
+body {
+    background-color: #ffffff;
+    color: #003366;
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+video {
+    width: 720px;
+    max-width: 100%;
+    border-radius: 6px;
+}

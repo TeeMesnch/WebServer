@@ -108,9 +108,19 @@ namespace WebServer
             }
         }
 
-        static void Video()
+        public static Task<byte[]> VideoHtml()
         {
-            Console.WriteLine("Video started...");
+            return ReadFileAsync("/Users/jonathan/Desktop/cSharp/WebServer/WebServer/Video/video.html");
+        }
+
+        public static Task<byte[]> VideoCss()
+        {
+            return ReadFileAsync("/Users/jonathan/Desktop/cSharp/WebServer/WebServer/Video/video.css");
+        }
+        
+        public static Task<byte[]> VideoMp4()
+        {
+            return ReadFileAsync("/Users/jonathan/Desktop/video.mp4");
         }
 
         public class Chat

@@ -1,3 +1,4 @@
+using System.Net;
 using System.Text;
 
 namespace WebServer
@@ -220,6 +221,60 @@ namespace WebServer
             var responsePacket = HttpProtocol.Builder.BuildResponse(responseStatusCode, responseHeaders, responseBody);
                 
             return responsePacket;
+        }
+
+        public static async Task<byte[]> RouteVideoHtml()
+        {
+            var videoHtmlCode = HttpProtocol.StatusLine.Ok;
+            var videoHtmlBody = await Endpoints.VideoHtml();
+
+            var videoCssHeaders = new List<byte[]>
+            {
+                HttpProtocol.HttpHeader.Date,
+                HttpProtocol.HttpHeader.ContentTypeHtml,
+                HttpProtocol.HttpHeader.ContentLength(videoHtmlBody.Length),
+                HttpProtocol.HttpHeader.ConnectionClose
+            };
+           
+            var videoCssPacket = HttpProtocol.Builder.BuildResponse(videoHtmlCode, videoCssHeaders, videoHtmlBody);
+           
+            return videoCssPacket;
+        }
+
+        public static async Task<byte[]> RouteVideoCss()
+        {
+           var videoCssStatusCode = HttpProtocol.StatusLine.Ok; 
+           var videoCssBody = await Endpoints.VideoCss();
+
+           var videoCssHeaders = new List<byte[]>
+           {
+               HttpProtocol.HttpHeader.Date,
+               HttpProtocol.HttpHeader.ContentTypeCss,
+               HttpProtocol.HttpHeader.ContentLength(videoCssBody.Length),
+               HttpProtocol.HttpHeader.ConnectionClose
+           };
+           
+           var videoCssPacket = HttpProtocol.Builder.BuildResponse(videoCssStatusCode, videoCssHeaders, videoCssBody);
+           
+           return videoCssPacket;
+        }
+        
+        public static byte[] RouteVideoMp4()
+        {
+            var videoMp4StatusCode = HttpProtocol.StatusLine.Ok;
+            var videoBytes = Endpoints.VideoMp4().Result;
+
+            var videoHeaders = new List<byte[]>
+            {
+                HttpProtocol.HttpHeader.Date,
+                HttpProtocol.HttpHeader.ContentTypeVideoMp4,
+                HttpProtocol.HttpHeader.ContentLength(videoBytes.Length),
+                HttpProtocol.HttpHeader.ConnectionClose
+            };
+            
+            var videoPacket = HttpProtocol.Builder.BuildResponse(videoMp4StatusCode, videoHeaders, videoBytes);
+
+            return videoPacket;
         }
     }
 }

@@ -62,7 +62,14 @@ namespace WebServer
 
             while (true)
             {
-                var client = server.AcceptTcpClientAsync().GetAwaiter().GetResult();
+                var client = server.AcceptTcpClientAsync().GetAwaiter().GetResult(); 
+                
+                // Implement Retry After
+                IPEndPoint remoteEndPoint = client.Client.RemoteEndPoint as IPEndPoint;
+                string clientIp = remoteEndPoint?.Address.ToString();
+
+                Console.WriteLine($"Connection from {clientIp}");
+                
                 await ProcessClient(client, wsIp);
             }
         }
@@ -83,6 +90,8 @@ namespace WebServer
                 }
 
                 var request = await ProcessMessage(sslStream);
+                
+                Console.WriteLine(HttpParser.GetDomain(request));
                 
                 if (HttpParser.GetDomain(request) == "/")
                 {
@@ -134,22 +143,39 @@ namespace WebServer
                     
                     await sslStream.WriteAsync(echoPacket, 0 , echoPacket.Length);
                 }
-                else if (HttpParser.GetDomain(request) == "/file/create")
+                else if (HttpParser.GetDomain(request).Contains("/file/create"))
                 {
                     var createFilePacket= await Routes.RouteCreateFile(request);
                     
                     await sslStream.WriteAsync(createFilePacket, 0, createFilePacket.Length);
                 }
-                else if (HttpParser.GetDomain(request) == "/file/compress/")
+                else if (HttpParser.GetDomain(request).Contains("/file/compress/"))
                 {
                     var compressFilePacket = Routes.RouteCompressFile(request);
                     
                     await sslStream.WriteAsync(compressFilePacket, 0, compressFilePacket.Length);
                 }
+                else if (HttpParser.GetDomain(request).Contains("/video"))
+                {
+                    var videoHtml = await Routes.RouteVideoHtml();
+                    
+                    await sslStream.WriteAsync(videoHtml, 0, videoHtml.Length);
+                }
+                else if (HttpParser.GetDomain(request).Contains("/video.css"))
+                {
+                    var videoCss = await Routes.RouteVideoCss();
+                    
+                    await sslStream.WriteAsync(videoCss, 0, videoCss.Length);
+                }
                 else
                 {
                     var notFoundPacket= Routes.RouteNotFound();
-                    
+
+                    if (Debug)
+                    {
+                        Console.WriteLine($"404 not found (domain : {HttpParser.GetDomain(request)})");
+                    }
+
                     await sslStream.WriteAsync(notFoundPacket, 0 , notFoundPacket.Length);
                 }
             }

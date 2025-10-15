@@ -43,6 +43,7 @@ namespace WebServer
             public static readonly byte[] ContentTypeCss = Encode("Content-Type: text/css\r\n");
             public static readonly byte[] ContentTypeJson = Encode("Content-Type: application/json\r\n");
             public static readonly byte[] ContentTypeTextStream = Encode("Content-Type: text/event-stream\r\n");
+            public static readonly byte[] ContentTypeVideoMp4 = Encode("Content-Type: video/mp4\r\n");
 
             public static readonly byte[] ConnectionClose = Encode("Connection: close\r\n");
             public static readonly byte[] ConnectionKeepAlive = Encode("Connection: keep-alive\r\n");
