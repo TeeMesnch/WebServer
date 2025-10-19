@@ -97,6 +97,24 @@ namespace WebServer
             return notFoundPacket;
         }
 
+        public static byte[] RouteTimeout()
+        {
+            var timeoutStatusCode = HttpProtocol.StatusLine.RequestTimeout;
+            var timeoutBody = Array.Empty<byte>();
+
+            var timeoutHeaders = new List<byte[]>
+            {
+                HttpProtocol.HttpHeader.Date,
+                HttpProtocol.HttpHeader.RetryAfter,
+                HttpProtocol.HttpHeader.ContentLength(0),
+                HttpProtocol.HttpHeader.ConnectionClose
+            };
+            
+            var timeoutPacket = HttpProtocol.Builder.BuildResponse(timeoutStatusCode, timeoutHeaders, timeoutBody);
+            
+            return timeoutPacket;
+        }
+
         public static async Task<byte[]> RouteChatHtml()
         {
             var chatHtmlStatusCode = HttpProtocol.StatusLine.Ok;

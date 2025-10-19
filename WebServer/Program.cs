@@ -10,6 +10,7 @@ namespace WebServer
     public class Server
     {
         static X509Certificate2 ServerCertificate;
+        static List<EndPoint> clientList = new List<EndPoint>();
         public const int RetryAfter = 60;
         private const bool LocalHost = true;
         private const bool Debug = false;
@@ -54,7 +55,7 @@ namespace WebServer
 
 
             ServerCertificate = X509CertificateLoader.LoadPkcs12FromFile(certificatePath, certificatePassword);
-
+            
             TcpListener server = new TcpListener(ip);
             server.Start();
 
@@ -64,12 +65,6 @@ namespace WebServer
             {
                 var client = server.AcceptTcpClientAsync().GetAwaiter().GetResult(); 
                 
-                // Implement Retry After
-                IPEndPoint remoteEndPoint = client.Client.RemoteEndPoint as IPEndPoint;
-                string clientIp = remoteEndPoint?.Address.ToString();
-
-                Console.WriteLine($"Connection from {clientIp}");
-                
                 await ProcessClient(client, wsIp);
             }
         }
@@ -77,7 +72,7 @@ namespace WebServer
         static async Task ProcessClient(TcpClient client, IPEndPoint wsEndPoint)
         {
             SslStream sslStream = new SslStream(client.GetStream(), false);
-
+            
             try
             {
                 await sslStream.AuthenticateAsServerAsync(ServerCertificate, clientCertificateRequired: false, enabledSslProtocols: SslProtocols.Tls12 | SslProtocols.Tls13, checkCertificateRevocation: true);
@@ -93,11 +88,32 @@ namespace WebServer
                 
                 Console.WriteLine(HttpParser.GetDomain(request));
                 
-                if (HttpParser.GetDomain(request) == "/")
+                if (clientList.Contains(client.Client.RemoteEndPoint))
+                {
+                    Console.WriteLine($"Client timeout (endpoint : {client.Client.RemoteEndPoint})");
+                
+                    var timeoutPacket = Routes.RouteTimeout();
+                
+                    await sslStream.WriteAsync(timeoutPacket, 0, timeoutPacket.Length);
+                }
+                else if (HttpParser.GetDomain(request) == "/")
                 {
                     var indexHtmlPacket = await Routes.RouteIndexHtml();
                     
                     await sslStream.WriteAsync(indexHtmlPacket, 0, indexHtmlPacket.Length);
+                    
+                    try
+                    {
+                        if (!clientList.Contains(client.Client.RemoteEndPoint))
+                        {
+                            clientList.Add(client.Client.RemoteEndPoint);
+                            Console.WriteLine($"Client list contains {client.Client.RemoteEndPoint}");
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e.Message);
+                    }
                 }
                 else if (HttpParser.GetDomain(request) == "/main.js")
                 {
