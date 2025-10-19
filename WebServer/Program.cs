@@ -10,7 +10,7 @@ namespace WebServer
     public class Server
     {
         static X509Certificate2 ServerCertificate;
-        static List<EndPoint> clientList = new List<EndPoint>();
+        private static List<string> clientList;
         public const int RetryAfter = 60;
         private const bool LocalHost = true;
         private const bool Debug = false;
@@ -87,16 +87,24 @@ namespace WebServer
                 var request = await ProcessMessage(sslStream);
                 
                 Console.WriteLine(HttpParser.GetDomain(request));
-                
-                if (clientList.Contains(client.Client.RemoteEndPoint))
+
+                try
                 {
-                    Console.WriteLine($"Client timeout (endpoint : {client.Client.RemoteEndPoint})");
-                
-                    var timeoutPacket = Routes.RouteTimeout();
-                
-                    await sslStream.WriteAsync(timeoutPacket, 0, timeoutPacket.Length);
+                    if (clientList.Contains(client.Client.RemoteEndPoint.ToString()))
+                    {
+                        Console.WriteLine($"Client timeout (endpoint : {client.Client.RemoteEndPoint})");
+
+                        var timeoutPacket = Routes.RouteTimeout();
+
+                        await sslStream.WriteAsync(timeoutPacket, 0, timeoutPacket.Length);
+                    }
                 }
-                else if (HttpParser.GetDomain(request) == "/")
+                catch (NullReferenceException)
+                {
+                    Console.WriteLine($"Client disconnected (endpoint : {client.Client.RemoteEndPoint})");
+                }
+
+                if (HttpParser.GetDomain(request) == "/")
                 {
                     var indexHtmlPacket = await Routes.RouteIndexHtml();
                     
@@ -104,10 +112,10 @@ namespace WebServer
                     
                     try
                     {
-                        if (!clientList.Contains(client.Client.RemoteEndPoint))
+                        if (!clientList.Contains(client.Client.RemoteEndPoint.ToString()))
                         {
-                            clientList.Add(client.Client.RemoteEndPoint);
-                            Console.WriteLine($"Client list contains {client.Client.RemoteEndPoint}");
+                            clientList.Add(client.Client.RemoteEndPoint.ToString());
+                            Console.WriteLine($"Client list contains {clientList.Count} clients.");
                         }
                     }
                     catch (Exception e)
