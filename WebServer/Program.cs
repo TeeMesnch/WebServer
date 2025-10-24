@@ -94,7 +94,7 @@ namespace WebServer
                     {
                         Console.WriteLine($"Client timeout (endpoint : {client.Client.RemoteEndPoint})");
 
-                        var timeoutPacket = Routes.RouteTimeout();
+                        var timeoutPacket = Routes.RouteTimeout(request);
 
                         await sslStream.WriteAsync(timeoutPacket, 0, timeoutPacket.Length);
                     }
@@ -106,8 +106,7 @@ namespace WebServer
 
                 if (HttpParser.GetDomain(request) == "/")
                 {
-                    var indexHtmlPacket = await Routes.RouteIndexHtml();
-                    
+                    var indexHtmlPacket = await Routes.RouteIndexHtml(request);
                     await sslStream.WriteAsync(indexHtmlPacket, 0, indexHtmlPacket.Length);
                     
                     try
@@ -125,25 +124,25 @@ namespace WebServer
                 }
                 else if (HttpParser.GetDomain(request) == "/main.js")
                 {
-                    var indexJsPacket = await Routes.RouteIndexJs();
+                    var indexJsPacket = await Routes.RouteIndexJs(request);
                     
                     await sslStream.WriteAsync(indexJsPacket, 0, indexJsPacket.Length);
                 }
                 else if (HttpParser.GetDomain(request) == "/style.css")
                 {
-                    var indexCssPacket = await Routes.RouteIndexCss();
+                    var indexCssPacket = await Routes.RouteIndexCss(request);
                     
                     await sslStream.WriteAsync(indexCssPacket, 0, indexCssPacket.Length);
                 }
                 else if (HttpParser.GetDomain(request) == "/chat")
                 {
-                    var chatHtmlPacket = await Routes.RouteChatHtml();
+                    var chatHtmlPacket = await Routes.RouteChatHtml(request);
                     
                     await sslStream.WriteAsync(chatHtmlPacket, 0, chatHtmlPacket.Length);
                 }
                 else if (HttpParser.GetDomain(request) == "/chat.js")
                 {
-                    var chatJsPacket = await Routes.RouteChatJs();
+                    var chatJsPacket = await Routes.RouteChatJs(request);
                     
                     await sslStream.WriteAsync(chatJsPacket, 0, chatJsPacket.Length);
 
@@ -151,7 +150,7 @@ namespace WebServer
                 }
                 else if (HttpParser.GetDomain(request) == "/chat.css")
                 {
-                    var chatCssPacket = await Routes.RouteChatCss();
+                    var chatCssPacket = await Routes.RouteChatCss(request);
                     
                     await sslStream.WriteAsync(chatCssPacket, 0, chatCssPacket.Length);
                 }
@@ -181,19 +180,19 @@ namespace WebServer
                 }
                 else if (HttpParser.GetDomain(request).Contains("/video"))
                 {
-                    var videoHtml = await Routes.RouteVideoHtml();
+                    var videoHtml = await Routes.RouteVideoHtml(request);
                     
                     await sslStream.WriteAsync(videoHtml, 0, videoHtml.Length);
                 }
                 else if (HttpParser.GetDomain(request).Contains("/video.css"))
                 {
-                    var videoCss = await Routes.RouteVideoCss();
+                    var videoCss = await Routes.RouteVideoCss(request);
                     
                     await sslStream.WriteAsync(videoCss, 0, videoCss.Length);
                 }
                 else
                 {
-                    var notFoundPacket= Routes.RouteNotFound();
+                    var notFoundPacket= Routes.RouteNotFound(request);
 
                     if (Debug)
                     {
@@ -202,6 +201,14 @@ namespace WebServer
 
                     await sslStream.WriteAsync(notFoundPacket, 0 , notFoundPacket.Length);
                 }
+
+                var endPointDictionary = new Dictionary<string, Func<string>>
+                {
+                    { "/", Routes.RouteIndexHtml(request)},
+                    { "main.js", Routes.RouteIndexJs(request)},
+                    { "style.css", Routes.RouteIndexCss(request)}
+                };
+
             }
             catch (AuthenticationException)
             {

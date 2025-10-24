@@ -1,11 +1,10 @@
-using System.Net;
 using System.Text;
 
 namespace WebServer
 {
     class Routes
     {
-        public static async Task<byte[]> RouteIndexHtml()
+        public static async Task<byte[]> RouteIndexHtml(string request)
         {
             var statusCode = HttpProtocol.StatusLine.Ok;
             
@@ -24,7 +23,7 @@ namespace WebServer
             return indexHtmlPacket;
         }
 
-        public static async Task<byte[]> RouteIndexJs()
+        public static async Task<byte[]> RouteIndexJs(string request)
         {
             var statusCode = HttpProtocol.StatusLine.Ok;
 
@@ -43,7 +42,7 @@ namespace WebServer
             return indexJsPacket;
         }
         
-        public static async Task<byte[]> RouteIndexCss()
+        public static async Task<byte[]> RouteIndexCss(string request)
         {
             var statusCode = HttpProtocol.StatusLine.Ok;
             
@@ -80,7 +79,7 @@ namespace WebServer
             return echoPacket;
         }
 
-        public static byte[] RouteNotFound()
+        public static byte[] RouteNotFound(string request)
         {
             var notFoundStatusCode = HttpProtocol.StatusLine.NotFound;
             var notFoundBody = Array.Empty<byte>();
@@ -97,7 +96,7 @@ namespace WebServer
             return notFoundPacket;
         }
 
-        public static byte[] RouteTimeout()
+        public static byte[] RouteTimeout(string request)
         {
             var timeoutStatusCode = HttpProtocol.StatusLine.RequestTimeout;
             var timeoutBody = Array.Empty<byte>();
@@ -115,7 +114,7 @@ namespace WebServer
             return timeoutPacket;
         }
 
-        public static async Task<byte[]> RouteChatHtml()
+        public static async Task<byte[]> RouteChatHtml(string request)
         {
             var chatHtmlStatusCode = HttpProtocol.StatusLine.Ok;
             var chatHtmlBody = await Endpoints.Chat.ChatHtml();
@@ -133,7 +132,7 @@ namespace WebServer
             return chatHtmlPacket;
         }
 
-        public static async Task<byte[]> RouteChatJs()
+        public static async Task<byte[]> RouteChatJs(string request)
         {
             var chatJsStatusCode = HttpProtocol.StatusLine.Ok;
             var chatJsBody = await Endpoints.Chat.ChatJs();
@@ -151,7 +150,7 @@ namespace WebServer
             return chatJsPacket;
         }
 
-        public static async Task<byte[]> RouteChatCss()
+        public static async Task<byte[]> RouteChatCss(string request)
         {
             var chatCssStatusCode = HttpProtocol.StatusLine.Ok;
             var chatCssBody = await Endpoints.Chat.ChatCss();
@@ -241,7 +240,7 @@ namespace WebServer
             return responsePacket;
         }
 
-        public static async Task<byte[]> RouteVideoHtml()
+        public static async Task<byte[]> RouteVideoHtml(string request)
         {
             var videoHtmlCode = HttpProtocol.StatusLine.Ok;
             var videoHtmlBody = await Endpoints.VideoHtml();
@@ -259,7 +258,7 @@ namespace WebServer
             return videoCssPacket;
         }
 
-        public static async Task<byte[]> RouteVideoCss()
+        public static async Task<byte[]> RouteVideoCss(string request)
         {
            var videoCssStatusCode = HttpProtocol.StatusLine.Ok; 
            var videoCssBody = await Endpoints.VideoCss();
@@ -277,7 +276,7 @@ namespace WebServer
            return videoCssPacket;
         }
         
-        public static byte[] RouteVideoMp4()
+        public static byte[] RouteVideoMp4(string request)
         {
             var videoMp4StatusCode = HttpProtocol.StatusLine.Ok;
             var videoBytes = Endpoints.VideoMp4().Result;
