@@ -8,9 +8,7 @@
   - `/video`
   - `/chat`
 - Basic support for CSS and JavaScript
-- Fully asynchronous where possible
 - Supports TLS 1.2 and 1.3
-- Displays debug information
 
 ## Usage
 
