@@ -86,55 +86,8 @@ namespace WebServer
 
                 var request = await ProcessMessage(sslStream);
                 
-                Console.WriteLine(HttpParser.GetDomain(request));
-
-                try
-                {
-                    if (clientList.Contains(client.Client.RemoteEndPoint.ToString()))
-                    {
-                        Console.WriteLine($"Client timeout (endpoint : {client.Client.RemoteEndPoint})");
-
-                        var timeoutPacket = Routes.RouteTimeout(request);
-
-                        await sslStream.WriteAsync(timeoutPacket, 0, timeoutPacket.Length);
-                    }
-                }
-                catch (NullReferenceException)
-                {
-                    Console.WriteLine($"Client disconnected (endpoint : {client.Client.RemoteEndPoint})");
-                }
-
-                if (HttpParser.GetDomain(request) == "/")
-                {
-                    var indexHtmlPacket = await Routes.RouteIndexHtml(request);
-                    await sslStream.WriteAsync(indexHtmlPacket, 0, indexHtmlPacket.Length);
-                    
-                    try
-                    {
-                        if (!clientList.Contains(client.Client.RemoteEndPoint.ToString()))
-                        {
-                            clientList.Add(client.Client.RemoteEndPoint.ToString());
-                            Console.WriteLine($"Client list contains {clientList.Count} clients.");
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine(e.Message);
-                    }
-                }
-                else if (HttpParser.GetDomain(request) == "/main.js")
-                {
-                    var indexJsPacket = await Routes.RouteIndexJs(request);
-                    
-                    await sslStream.WriteAsync(indexJsPacket, 0, indexJsPacket.Length);
-                }
-                else if (HttpParser.GetDomain(request) == "/style.css")
-                {
-                    var indexCssPacket = await Routes.RouteIndexCss(request);
-                    
-                    await sslStream.WriteAsync(indexCssPacket, 0, indexCssPacket.Length);
-                }
-                else if (HttpParser.GetDomain(request) == "/chat")
+                
+                if (HttpParser.GetDomain(request) == "/chat")
                 {
                     var chatHtmlPacket = await Routes.RouteChatHtml(request);
                     
@@ -192,32 +145,37 @@ namespace WebServer
                 }
                 else
                 {
-                    var notFoundPacket= Routes.RouteNotFound(request);
+                    //var notFoundPacket= Routes.RouteNotFound(request);
 
                     if (Debug)
                     {
                         Console.WriteLine($"404 not found (domain : {HttpParser.GetDomain(request)})");
                     }
 
-                    await sslStream.WriteAsync(notFoundPacket, 0 , notFoundPacket.Length);
+                    //await sslStream.WriteAsync(notFoundPacket, 0 , notFoundPacket.Length);
                 }
 
                 var endPointDictionary = new Dictionary<string, Task<byte[]>>
                 {
                     { "/", Routes.RouteIndexHtml(request)},
-                    { "main.js", Routes.RouteIndexJs(request)},
-                    { "style.css", Routes.RouteIndexCss(request)}
+                    { "/main.js", Routes.RouteIndexJs(request)},
+                    { "/style.css", Routes.RouteIndexCss(request)}
                 };
                 
                 if (endPointDictionary.TryGetValue(HttpParser.GetDomain(request), out var result))
                 {
-                    var package = result(string.Empty);
-
+                    Console.WriteLine(HttpParser.GetDomain(request));
+                    
+                    var package = result.Result;
+                    
                     await sslStream.WriteAsync(package, 0, package.Length);
+                    
+                    Console.WriteLine("Sent data");
                 }
                 else
                 {
                     var notFoundPackage = Routes.RouteNotFound(request);
+                    Console.WriteLine("not found" + HttpParser.GetDomain(request));
                     
                     await sslStream.WriteAsync(notFoundPackage, 0, notFoundPackage.Length);
                 }
