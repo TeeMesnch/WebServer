@@ -202,13 +202,25 @@ namespace WebServer
                     await sslStream.WriteAsync(notFoundPacket, 0 , notFoundPacket.Length);
                 }
 
-                var endPointDictionary = new Dictionary<string, Func<string>>
+                var endPointDictionary = new Dictionary<string, Task<byte[]>>
                 {
                     { "/", Routes.RouteIndexHtml(request)},
                     { "main.js", Routes.RouteIndexJs(request)},
                     { "style.css", Routes.RouteIndexCss(request)}
                 };
+                
+                if (endPointDictionary.TryGetValue(HttpParser.GetDomain(request), out var result))
+                {
+                    var package = result(string.Empty);
 
+                    await sslStream.WriteAsync(package, 0, package.Length);
+                }
+                else
+                {
+                    var notFoundPackage = Routes.RouteNotFound(request);
+                    
+                    await sslStream.WriteAsync(notFoundPackage, 0, notFoundPackage.Length);
+                }
             }
             catch (AuthenticationException)
             {
