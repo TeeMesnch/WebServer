@@ -85,81 +85,21 @@ namespace WebServer
                 }
 
                 var request = await ProcessMessage(sslStream);
-                
-                
-                if (HttpParser.GetDomain(request) == "/chat")
-                {
-                    var chatHtmlPacket = await Routes.RouteChatHtml(request);
-                    
-                    await sslStream.WriteAsync(chatHtmlPacket, 0, chatHtmlPacket.Length);
-                }
-                else if (HttpParser.GetDomain(request) == "/chat.js")
-                {
-                    var chatJsPacket = await Routes.RouteChatJs(request);
-                    
-                    await sslStream.WriteAsync(chatJsPacket, 0, chatJsPacket.Length);
-
-                    await WebSocketHandler.RunWebsocket(wsEndPoint);
-                }
-                else if (HttpParser.GetDomain(request) == "/chat.css")
-                {
-                    var chatCssPacket = await Routes.RouteChatCss(request);
-                    
-                    await sslStream.WriteAsync(chatCssPacket, 0, chatCssPacket.Length);
-                }
-                else if (HttpParser.GetDomain(request) == "/messages")
-                {
-                    var responsePacket = Routes.RouteMessages(request);
-                    
-                    await sslStream.WriteAsync(responsePacket, 0, responsePacket.Length);
-                }
-                else if (HttpParser.GetDomain(request) == "/echo/")
-                {
-                    var echoPacket = Routes.RouteEcho(request);
-                    
-                    await sslStream.WriteAsync(echoPacket, 0 , echoPacket.Length);
-                }
-                else if (HttpParser.GetDomain(request).Contains("/file/create"))
-                {
-                    var createFilePacket= await Routes.RouteCreateFile(request);
-                    
-                    await sslStream.WriteAsync(createFilePacket, 0, createFilePacket.Length);
-                }
-                else if (HttpParser.GetDomain(request).Contains("/file/compress/"))
-                {
-                    var compressFilePacket = Routes.RouteCompressFile(request);
-                    
-                    await sslStream.WriteAsync(compressFilePacket, 0, compressFilePacket.Length);
-                }
-                else if (HttpParser.GetDomain(request).Contains("/video"))
-                {
-                    var videoHtml = await Routes.RouteVideoHtml(request);
-                    
-                    await sslStream.WriteAsync(videoHtml, 0, videoHtml.Length);
-                }
-                else if (HttpParser.GetDomain(request).Contains("/video.css"))
-                {
-                    var videoCss = await Routes.RouteVideoCss(request);
-                    
-                    await sslStream.WriteAsync(videoCss, 0, videoCss.Length);
-                }
-                else
-                {
-                    //var notFoundPacket= Routes.RouteNotFound(request);
-
-                    if (Debug)
-                    {
-                        Console.WriteLine($"404 not found (domain : {HttpParser.GetDomain(request)})");
-                    }
-
-                    //await sslStream.WriteAsync(notFoundPacket, 0 , notFoundPacket.Length);
-                }
 
                 var endPointDictionary = new Dictionary<string, Task<byte[]>>
                 {
                     { "/", Routes.RouteIndexHtml(request)},
                     { "/main.js", Routes.RouteIndexJs(request)},
-                    { "/style.css", Routes.RouteIndexCss(request)}
+                    { "/style.css", Routes.RouteIndexCss(request)},
+                    { "/chat", Routes.RouteChatHtml(request)},
+                    { "/chat.css", Routes.RouteChatCss(request)},
+                    { "/chat.js", Routes.RouteChatJs(request)},
+                    { "/messages", Routes.RouteMessages(request)},
+                    {  "/echo/", Routes.RouteEcho(request) },
+                    { "/file/create", Routes.RouteCreateFile(request) },
+                    { "/file/compress/", Routes.RouteCompressFile(request) },
+                    { "/video",  Routes.RouteVideoHtml(request) },
+                    { "/video.css", Routes.RouteVideoCss(request) },
                 };
                 
                 if (endPointDictionary.TryGetValue(HttpParser.GetDomain(request), out var result))
@@ -171,10 +111,10 @@ namespace WebServer
                     await sslStream.WriteAsync(package, 0, package.Length);
                     
                     Console.WriteLine("Sent data");
-                }
+                } // ELSE IF TIMEOUT 
                 else
                 {
-                    var notFoundPackage = Routes.RouteNotFound(request);
+                    var notFoundPackage = await Routes.RouteNotFound(request);
                     Console.WriteLine("not found" + HttpParser.GetDomain(request));
                     
                     await sslStream.WriteAsync(notFoundPackage, 0, notFoundPackage.Length);

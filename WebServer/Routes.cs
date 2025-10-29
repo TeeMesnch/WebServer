@@ -61,7 +61,7 @@ namespace WebServer
             return indexCssPacket;
         }
 
-        public static byte[] RouteEcho(string request)
+        public static async Task<byte[]> RouteEcho(string request)
         {
             var echoStatusCode = HttpProtocol.StatusLine.Ok;
             var echoBody = Endpoints.Echo(request);
@@ -79,7 +79,7 @@ namespace WebServer
             return echoPacket;
         }
 
-        public static byte[] RouteNotFound(string request)
+        public static async Task<byte[]> RouteNotFound(string request)
         {
             var notFoundStatusCode = HttpProtocol.StatusLine.NotFound;
             var notFoundBody = Array.Empty<byte>();
@@ -196,7 +196,7 @@ namespace WebServer
             return Array.Empty<byte>();
         }
 
-        public static byte[] RouteCompressFile(string request)
+        public static async Task<byte[]> RouteCompressFile(string request)
         {
             string fileName = HttpParser.GetDomain(request).Substring("/file/compress/".Length);
             
@@ -217,7 +217,7 @@ namespace WebServer
             return compressPacket;
         }
 
-        public static byte[] RouteMessages(string request)
+        public static async Task<byte[]> RouteMessages(string request)
         {
             var content = HttpParser.GetBody(request);
 
@@ -276,7 +276,7 @@ namespace WebServer
            return videoCssPacket;
         }
         
-        public static byte[] RouteVideoMp4(string request)
+        public static async Task<byte[]> RouteVideoMp4(string request)
         {
             var videoMp4StatusCode = HttpProtocol.StatusLine.Ok;
             var videoBytes = Endpoints.VideoMp4().Result;
