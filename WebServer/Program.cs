@@ -9,13 +9,13 @@ namespace WebServer
 {
     public class Server
     {
-        static X509Certificate2 ServerCertificate;
-        private static List<string> clientList;
+        private static X509Certificate2 ServerCertificate;
+        private static List<string> ClientList;
         public const int RetryAfter = 60;
         private const bool LocalHost = true;
         private const bool Debug = false;
 
-        static async Task Main(string[] args)
+        static async Task Main()
         {
             DisplayUsage();
 
@@ -23,7 +23,7 @@ namespace WebServer
             Environment.CurrentDirectory = "/Users/jonathan/Desktop/test";
 
             string certificatePath = "/Users/jonathan/Desktop/localhost.pfx";
-            string certificatePassword = Console.ReadLine();
+            string? certificatePassword = Console.ReadLine();
             
             if (certificatePassword == string.Empty)
             {
@@ -36,21 +36,27 @@ namespace WebServer
         static async Task RunServer(string certificatePath, string certificatePassword)
         {
             const int port = 4200;
-            const int wsPort = 4201;
             var ip = new IPEndPoint(IPAddress.Loopback, port);
-            var wsIp = new IPEndPoint(IPAddress.Loopback, wsPort);
 
             if (!LocalHost)
             {
-                var hostName = Dns.GetHostName();
-                IPHostEntry localhost = await Dns.GetHostEntryAsync(hostName);
+                try
+                {
+                    var hostName = Dns.GetHostName();
+                    IPHostEntry localhost = await Dns.GetHostEntryAsync(hostName);
 
-                IPAddress localIpAddress = localhost.AddressList.FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork);
+                    IPAddress localIpAddress =
+                        localhost.AddressList.FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork);
 
-                if (localIpAddress == null) throw new Exception("No IPv4 address found for local host.");
+                    if (localIpAddress == null) throw new Exception("No IPv4 address found for local host.");
 
-                ip = new IPEndPoint(localIpAddress, port);
-                wsIp = new IPEndPoint(localIpAddress, wsPort);
+                    ip = new IPEndPoint(localIpAddress, port);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                    return;
+                }
             }
 
 
@@ -65,11 +71,11 @@ namespace WebServer
             {
                 var client = server.AcceptTcpClientAsync().GetAwaiter().GetResult(); 
                 
-                await ProcessClient(client, wsIp);
+                await ProcessClient(client);
             }
         }
 
-        static async Task ProcessClient(TcpClient client, IPEndPoint wsEndPoint)
+        static async Task ProcessClient(TcpClient client)
         {
             SslStream sslStream = new SslStream(client.GetStream(), false);
             
@@ -109,13 +115,10 @@ namespace WebServer
                     var package = result.Result;
                     
                     await sslStream.WriteAsync(package, 0, package.Length);
-                    
-                    Console.WriteLine("Sent data");
                 } // ELSE IF TIMEOUT 
                 else
                 {
                     var notFoundPackage = await Routes.RouteNotFound(request);
-                    Console.WriteLine("not found" + HttpParser.GetDomain(request));
                     
                     await sslStream.WriteAsync(notFoundPackage, 0, notFoundPackage.Length);
                 }
@@ -169,7 +172,7 @@ namespace WebServer
         {
             Console.WriteLine("Certificate revocation list checked: {0}", stream.CheckCertRevocationStatus);
 
-            X509Certificate localCertificate = stream.LocalCertificate;
+            X509Certificate? localCertificate = stream.LocalCertificate;
             if (stream.LocalCertificate != null)
             {
                 Console.WriteLine("Local cert was issued to {0} and is valid from {1} until {2}.",
@@ -182,7 +185,7 @@ namespace WebServer
                 Console.WriteLine("Local certificate cannot be found");
             }
 
-            X509Certificate remoteCertificate = stream.RemoteCertificate;
+            X509Certificate? remoteCertificate = stream.RemoteCertificate;
             if (stream.RemoteCertificate != null)
             {
                 Console.WriteLine("Remote cert was issued to {0} and is valid from {1} until {2}.",
