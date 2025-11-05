@@ -106,12 +106,12 @@ namespace WebServer
                     { "/file/compress/", Routes.RouteCompressFile(request) },
                     { "/video",  Routes.RouteVideoHtml(request) },
                     { "/video.css", Routes.RouteVideoCss(request) },
+                    { "/chat/", Routes.RouteChatHtml(request)},
+                    { "/video/",  Routes.RouteVideoHtml(request) },
                 };
                 
                 if (endPointDictionary.TryGetValue(HttpParser.GetDomain(request), out var result))
                 {
-                    Console.WriteLine(HttpParser.GetDomain(request));
-                    
                     var package = result.Result;
                     
                     await sslStream.WriteAsync(package, 0, package.Length);
@@ -140,9 +140,8 @@ namespace WebServer
         {
             byte[] buffer = new byte[1024];
             StringBuilder builder = new StringBuilder();
-            int read;
-            
-            read = await sslStream.ReadAsync(buffer, 0, buffer.Length);
+
+            var read = await sslStream.ReadAsync(buffer, 0, buffer.Length);
             
             Decoder decoder = Encoding.UTF8.GetDecoder(); 
             char[] chars = new char[decoder.GetCharCount(buffer, 0, read)]; 
