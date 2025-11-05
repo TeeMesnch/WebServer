@@ -106,27 +106,43 @@ namespace WebServer
                     { "/file/compress/", Routes.RouteCompressFile(request) },
                     { "/video",  Routes.RouteVideoHtml(request) },
                     { "/video.css", Routes.RouteVideoCss(request) },
+                    { "/video/GetVideoFile", Routes.RouteVideoMp4(request)},
                     { "/chat/", Routes.RouteChatHtml(request)},
                     { "/video/",  Routes.RouteVideoHtml(request) },
                 };
-                
-                if (endPointDictionary.TryGetValue(HttpParser.GetDomain(request), out var result))
+
+                try
                 {
-                    var package = result.Result;
-                    
-                    await sslStream.WriteAsync(package, 0, package.Length);
-                } // ELSE IF TIMEOUT 
-                else
+                    if (endPointDictionary.TryGetValue(HttpParser.GetDomain(request), out var result))
+                    {
+                        var package = result.Result;
+
+                        if (HttpParser.GetDomain(request) == "/video")
+                        {
+                            Console.WriteLine(Encoding.UTF8.GetString(package));
+                        }
+
+                        await sslStream.WriteAsync(package, 0, package.Length);
+                    } // ELSE IF TIMEOUT 
+                    else
+                    {
+                        var notFoundPackage = await Routes.RouteNotFound(request);
+
+                        await sslStream.WriteAsync(notFoundPackage, 0, notFoundPackage.Length);
+                    }
+                }
+                catch (Exception e)
                 {
-                    var notFoundPackage = await Routes.RouteNotFound(request);
-                    
-                    await sslStream.WriteAsync(notFoundPackage, 0, notFoundPackage.Length);
+                    Console.WriteLine(e.Message);
+                    Console.WriteLine("error sending data");
                 }
             }
             catch (AuthenticationException)
             {
                 sslStream.Close();
                 client.Close();
+                
+                Console.WriteLine("Authentication failed");
             }
             finally
             {

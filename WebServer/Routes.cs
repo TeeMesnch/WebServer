@@ -199,8 +199,15 @@ namespace WebServer
         public static async Task<byte[]> RouteCompressFile(string request)
         {
             string fileName = HttpParser.GetDomain(request).Substring("/file/compress/".Length);
-            
-            Endpoints.File.Compress(fileName);
+
+            try
+            {
+                Endpoints.File.Compress(fileName);
+            }
+            catch (Exception)
+            {
+                Console.WriteLine("Error compressing file: " + fileName);
+            }
             
             var compressStatusCode = HttpProtocol.StatusLine.Created;
             var compressBody = Array.Empty<byte>();
