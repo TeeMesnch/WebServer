@@ -102,7 +102,7 @@ namespace WebServer
                     { "/chat.js", Routes.RouteChatJs(request)},
                     { "/messages", Routes.RouteMessages(request)},
                     {  "/echo/", Routes.RouteEcho(request) },
-                    { "/file/create", Routes.RouteCreateFile(request) },
+                    { "/file/create/", Routes.RouteCreateFile(request) },
                     { "/file/compress/", Routes.RouteCompressFile(request) },
                     { "/video",  Routes.RouteVideoHtml(request) },
                     { "/video.css", Routes.RouteVideoCss(request) },
@@ -116,17 +116,17 @@ namespace WebServer
                     if (endPointDictionary.TryGetValue(HttpParser.GetDomain(request), out var result))
                     {
                         var package = result.Result;
-
-                        if (HttpParser.GetDomain(request) == "/video")
-                        {
-                            Console.WriteLine(Encoding.UTF8.GetString(package));
-                        }
+                        
+                        Console.WriteLine("hello world");
 
                         await sslStream.WriteAsync(package, 0, package.Length);
-                    } // ELSE IF TIMEOUT 
-                    else
+                    }
+                    
+                    if (result == null || !HttpParser.GetDomain(request).Contains("/file/compress/"))
                     {
                         var notFoundPackage = await Routes.RouteNotFound(request);
+                        
+                        Console.WriteLine("not found");
 
                         await sslStream.WriteAsync(notFoundPackage, 0, notFoundPackage.Length);
                     }
