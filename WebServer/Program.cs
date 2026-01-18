@@ -22,7 +22,7 @@ namespace WebServer
             // TESTING DIRECTORY
             Environment.CurrentDirectory = "/Users/jonathan/Desktop/test";
 
-            string certificatePath = "/Users/jonathan/Desktop/localhost.pfx";
+            string certificatePath = "/Users/jonathan/Desktop/general/localhost.pfx";
             string? certificatePassword = Console.ReadLine();
             
             if (certificatePassword == string.Empty)
@@ -94,20 +94,20 @@ namespace WebServer
 
                 var endPointDictionary = new Dictionary<string, Task<byte[]>>
                 {
-                    { "/", Routes.RouteIndexHtml(request)},
-                    { "/main.js", Routes.RouteIndexJs(request)},
-                    { "/style.css", Routes.RouteIndexCss(request)},
-                    { "/chat", Routes.RouteChatHtml(request)},
-                    { "/chat.css", Routes.RouteChatCss(request)},
-                    { "/chat.js", Routes.RouteChatJs(request)},
-                    { "/messages", Routes.RouteMessages(request)},
+                    { "/", Routes.RouteIndexHtml(request) },
+                    { "/main.js", Routes.RouteIndexJs(request) },
+                    { "/style.css", Routes.RouteIndexCss(request) },
+                    { "/chat", Routes.RouteChatHtml(request) },
+                    { "/chat.css", Routes.RouteChatCss(request) },
+                    { "/chat.js", Routes.RouteChatJs(request) },
+                    { "/messages", Routes.RouteMessages(request) },
                     {  "/echo/", Routes.RouteEcho(request) },
                     { "/file/create/", Routes.RouteCreateFile(request) },
                     { "/file/compress/", Routes.RouteCompressFile(request) },
                     { "/video",  Routes.RouteVideoHtml(request) },
                     { "/video.css", Routes.RouteVideoCss(request) },
-                    { "/video/GetVideoFile", Routes.RouteVideoMp4(request)},
-                    { "/chat/", Routes.RouteChatHtml(request)},
+                    { "/video/GetVideoFile", Routes.RouteVideoMp4(request) },
+                    { "/chat/", Routes.RouteChatHtml(request) },
                     { "/video/",  Routes.RouteVideoHtml(request) },
                 };
 
@@ -116,17 +116,12 @@ namespace WebServer
                     if (endPointDictionary.TryGetValue(HttpParser.GetDomain(request), out var result))
                     {
                         var package = result.Result;
-                        
-                        Console.WriteLine("hello world");
 
                         await sslStream.WriteAsync(package, 0, package.Length);
                     }
-                    
-                    if (result == null || !HttpParser.GetDomain(request).Contains("/file/compress/"))
+                    else
                     {
                         var notFoundPackage = await Routes.RouteNotFound(request);
-                        
-                        Console.WriteLine("not found");
 
                         await sslStream.WriteAsync(notFoundPackage, 0, notFoundPackage.Length);
                     }
